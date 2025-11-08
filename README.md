@@ -46,3 +46,30 @@ err := sync.Timeout(context.Background(), time.Second, func(context.Context) err
 	  return nil
 })
 ```
+
+## Pool
+
+Pool will create a pool of types. As an example:
+
+```go
+import (
+	"bytes"
+
+	"github.com/alexfalkowski/go-sync"
+)
+
+// NewBufferPool for sync.
+func NewBufferPool() *BufferPool {
+	return &BufferPool{pool: sync.NewPool[bytes.Buffer]()}
+}
+
+// BufferPool for sync.
+type BufferPool struct {
+	pool *sync.Pool[bytes.Buffer]
+}
+
+// Get a new buffer.
+func (p *BufferPool) Get() *bytes.Buffer {
+	return p.pool.Get()
+}
+```

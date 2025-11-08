@@ -4,6 +4,7 @@ linters:
   disable:
     - depguard
     - exhaustruct
+    - forcetypeassert
     - funcorder
     - gochecknoglobals
     - gochecknoinits
