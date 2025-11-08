@@ -11,7 +11,7 @@ A library to handle concurrency.
 
 ## Wait
 
-Wait for a handler or continue. As an example:
+Wait will wait for the handler to complete or continue. As an example:
 
 ```go
 import (
@@ -21,7 +21,27 @@ import (
 	"github.com/alexfalkowski/go-sync"
 )
 
-sync.Wait(context.Background(), time.Second, func(context.Context) error {
+// Do something with err.
+err := sync.Wait(context.Background(), time.Second, func(context.Context) error {
+    // Do something important.
+	  return nil
+})
+```
+
+## Timeout
+
+Timeout will wait for the handler to complete or timeout. As an example:
+
+```go
+import (
+	"context"
+	"time"
+
+	"github.com/alexfalkowski/go-sync"
+)
+
+// Do something with err.
+err := sync.Timeout(context.Background(), time.Second, func(context.Context) error {
     // Do something important.
 	  return nil
 })
