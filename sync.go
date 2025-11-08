@@ -1,6 +1,7 @@
 package sync
 
 import (
+	"bytes"
 	"context"
 	"sync"
 	"time"
@@ -73,4 +74,25 @@ func (p *Pool[T]) Get() *T {
 // Put an item of type T back.
 func (p *Pool[T]) Put(b *T) {
 	p.pool.Put(b)
+}
+
+// NewBufferPool for sync.
+func NewBufferPool() *BufferPool {
+	return &BufferPool{NewPool[bytes.Buffer]()}
+}
+
+// BufferPool for sync.
+type BufferPool struct {
+	*Pool[bytes.Buffer]
+}
+
+// Get a new buffer.
+func (p *BufferPool) Get() *bytes.Buffer {
+	return p.Pool.Get()
+}
+
+// Put the buffer back.
+func (p *BufferPool) Put(buffer *bytes.Buffer) {
+	buffer.Reset()
+	p.Pool.Put(buffer)
 }
