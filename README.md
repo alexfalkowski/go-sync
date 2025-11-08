@@ -49,7 +49,7 @@ err := sync.Timeout(context.Background(), time.Second, func(context.Context) err
 
 ## Pool
 
-Pool will create a pool of types. As an example:
+We have a generic pool based on sync.Pool and a buffer pool.
 
 ```go
 import (
@@ -58,18 +58,8 @@ import (
 	"github.com/alexfalkowski/go-sync"
 )
 
-// NewBufferPool for sync.
-func NewBufferPool() *BufferPool {
-	return &BufferPool{pool: sync.NewPool[bytes.Buffer]()}
-}
+pool := sync.NewBufferPool()
 
-// BufferPool for sync.
-type BufferPool struct {
-	pool *sync.Pool[bytes.Buffer]
-}
-
-// Get a new buffer.
-func (p *BufferPool) Get() *bytes.Buffer {
-	return p.pool.Get()
-}
+buffer := pool.Get() // Do something with buffer.
+defer pool.Put(buffer)
 ```
