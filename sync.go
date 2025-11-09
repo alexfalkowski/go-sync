@@ -5,19 +5,40 @@ import (
 	"context"
 	"errors"
 	"sync"
+	"sync/atomic"
 	"time"
-)
-
-type (
-	// Mutex is an alias of sync.Mutex.
-	Mutex = sync.Mutex
-
-	// RWMutex is an alias of sync.RWMutex.
-	RWMutex = sync.RWMutex
 )
 
 // Handler used for sync.
 type Handler func(context.Context) error
+
+// ErrorHandler used for sync.
+type ErrorHandler func(context.Context, error) error
+
+var atm atomic.Value
+
+func init() {
+	SetErrorHandler(DefaultErrorHandler)
+}
+
+// SetErrorHandler that will be used for handling errors.
+func SetErrorHandler(handler ErrorHandler) {
+	atm.Store(handler)
+}
+
+// DefaultErrorHandler for handling errors.
+var DefaultErrorHandler ErrorHandler = func(_ context.Context, err error) error {
+	return err
+}
+
+func handleError(ctx context.Context, err error) error {
+	errorHandler := atm.Load().(ErrorHandler)
+	if errorHandler != nil {
+		return errorHandler(ctx, err)
+	}
+
+	return nil
+}
 
 // IsTimeoutError checks if the error is deadline exceeded or canceled.
 func IsTimeoutError(err error) bool {
@@ -28,7 +49,7 @@ func IsTimeoutError(err error) bool {
 func Wait(ctx context.Context, timeout time.Duration, handler Handler) error {
 	ch := make(chan error, 1)
 	go func() {
-		ch <- handler(ctx)
+		ch <- handleError(ctx, handler(ctx))
 	}()
 
 	select {
@@ -46,7 +67,7 @@ func Timeout(ctx context.Context, timeout time.Duration, handler Handler) error 
 
 	ch := make(chan error, 1)
 	go func() {
-		ch <- handler(ctx)
+		ch <- handleError(ctx, handler(ctx))
 	}()
 
 	select {
