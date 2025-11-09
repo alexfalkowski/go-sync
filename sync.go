@@ -32,9 +32,9 @@ var DefaultErrorHandler ErrorHandler = func(_ context.Context, err error) error 
 }
 
 func handleError(ctx context.Context, err error) error {
-	errorHandler := errorHandler.Load()
-	if errorHandler != nil {
-		return errorHandler(ctx, err)
+	handler := errorHandler.Load()
+	if handler != nil {
+		return handler(ctx, err)
 	}
 
 	return nil
