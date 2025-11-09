@@ -35,16 +35,20 @@ func TestTimeoutNoError(t *testing.T) {
 }
 
 func TestTimeoutError(t *testing.T) {
-	require.Error(t, sync.Timeout(t.Context(), time.Second, func(context.Context) error {
+	err := sync.Timeout(t.Context(), time.Second, func(context.Context) error {
 		return context.Canceled
-	}))
+	})
+	require.Error(t, err)
+	require.True(t, sync.IsTimeoutError(err))
 }
 
-func TestTimeout(t *testing.T) {
-	require.ErrorIs(t, context.DeadlineExceeded, sync.Timeout(t.Context(), time.Microsecond, func(context.Context) error {
+func TestTimeoutOperationError(t *testing.T) {
+	err := sync.Timeout(t.Context(), time.Microsecond, func(context.Context) error {
 		time.Sleep(time.Second)
 		return nil
-	}))
+	})
+	require.Error(t, err)
+	require.True(t, sync.IsTimeoutError(err))
 }
 
 func TestPool(t *testing.T) {

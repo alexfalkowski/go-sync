@@ -21,11 +21,14 @@ import (
 	"github.com/alexfalkowski/go-sync"
 )
 
-// Do something with err.
+
 err := sync.Wait(context.Background(), time.Second, func(context.Context) error {
     // Do something important.
 	  return nil
 })
+if err != nil {
+    // Do something with err.
+}
 ```
 
 ## Timeout
@@ -45,11 +48,18 @@ err := sync.Timeout(context.Background(), time.Second, func(context.Context) err
     // Do something important.
 	  return nil
 })
+if err != nil {
+    if sync.IsTimeoutError(err) {
+        // Do something with timeout.
+    }
+
+    // Do something with error.
+}
 ```
 
 ## Pool
 
-We have a generic pool based on sync.Pool and a buffer pool.
+We have a generic pool based on [sync.Pool](https://pkg.go.dev/sync#Pool) and a [bytes.Buffer](https://pkg.go.dev/bytes#Buffer) pool.
 
 ```go
 import (
