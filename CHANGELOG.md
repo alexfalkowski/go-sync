@@ -6,6 +6,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## Unreleased
 
+## [v0.7.0](https://github.com/alexfalkowski/go-sync/releases/tag/v0.7.0) - 2025-11-09
+
+- [`ba4b3a8`](https://github.com/alexfalkowski/go-sync/commit/ba4b3a83112a3404ed9552a930c36ca0a73b6879) feat(error): add ability to handle errors (#8)
+- [`7dc382b`](https://github.com/alexfalkowski/go-sync/commit/7dc382beb1aa53f03d217ebff57dfc173e1f3276) docs(readme): add background (#7)
+
 ## [v0.6.0](https://github.com/alexfalkowski/go-sync/releases/tag/v0.6.0) - 2025-11-09
 
 - [`c8b796e`](https://github.com/alexfalkowski/go-sync/commit/c8b796ee8582cfb0c2dc2a3ca0b90fa87026a2e8) feat(timeout): add a way to check if we have one (#6)
