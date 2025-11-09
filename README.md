@@ -95,11 +95,24 @@ We have a generic pool based on [sync.Pool](https://pkg.go.dev/sync#Pool) and a 
 import (
     "bytes"
 
-    "github.com/alexfalkowski/go-sync"
+    "github.com/alexfalkowski/go-sync/bytes"
 )
 
-pool := sync.NewBufferPool()
+pool := bytes.NewBufferPool()
 
 buffer := pool.Get() // Do something with buffer.
 defer pool.Put(buffer)
+```
+
+## Atomic
+
+We have a generic value based on [atomic.Value](https://pkg.go.dev/sync/atomic#Value).
+
+```go
+import "github.com/alexfalkowski/go-sync/atomic"
+
+var value atomic.Value[int]
+
+value.Store(1)
+v := value.Load() // Do something with v.
 ```

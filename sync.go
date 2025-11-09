@@ -1,12 +1,12 @@
 package sync
 
 import (
-	"bytes"
 	"context"
 	"errors"
 	"sync"
-	"sync/atomic"
 	"time"
+
+	"github.com/alexfalkowski/go-sync/atomic"
 )
 
 // Handler used for sync.
@@ -15,7 +15,7 @@ type Handler func(context.Context) error
 // ErrorHandler used for sync.
 type ErrorHandler func(context.Context, error) error
 
-var atm atomic.Value
+var errorHandler atomic.Value[ErrorHandler]
 
 func init() {
 	SetErrorHandler(DefaultErrorHandler)
@@ -23,7 +23,7 @@ func init() {
 
 // SetErrorHandler that will be used for handling errors.
 func SetErrorHandler(handler ErrorHandler) {
-	atm.Store(handler)
+	errorHandler.Store(handler)
 }
 
 // DefaultErrorHandler for handling errors.
@@ -32,7 +32,7 @@ var DefaultErrorHandler ErrorHandler = func(_ context.Context, err error) error 
 }
 
 func handleError(ctx context.Context, err error) error {
-	errorHandler := atm.Load().(ErrorHandler)
+	errorHandler := errorHandler.Load()
 	if errorHandler != nil {
 		return errorHandler(ctx, err)
 	}
@@ -101,25 +101,4 @@ func (p *Pool[T]) Get() *T {
 // Put an item of type T back.
 func (p *Pool[T]) Put(b *T) {
 	p.pool.Put(b)
-}
-
-// NewBufferPool for sync.
-func NewBufferPool() *BufferPool {
-	return &BufferPool{NewPool[bytes.Buffer]()}
-}
-
-// BufferPool for sync.
-type BufferPool struct {
-	*Pool[bytes.Buffer]
-}
-
-// Get a new buffer.
-func (p *BufferPool) Get() *bytes.Buffer {
-	return p.Pool.Get()
-}
-
-// Put the buffer back.
-func (p *BufferPool) Put(buffer *bytes.Buffer) {
-	buffer.Reset()
-	p.Pool.Put(buffer)
 }
