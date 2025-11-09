@@ -3,6 +3,7 @@ package sync
 import (
 	"bytes"
 	"context"
+	"errors"
 	"sync"
 	"time"
 )
@@ -17,6 +18,11 @@ type (
 
 // Handler used for sync.
 type Handler func(context.Context) error
+
+// IsTimeoutError checks if the error is deadline exceeded or canceled.
+func IsTimeoutError(err error) bool {
+	return errors.Is(err, context.DeadlineExceeded) || errors.Is(err, context.Canceled)
+}
 
 // Wait will wait for the handler to complete or continue.
 func Wait(ctx context.Context, timeout time.Duration, handler Handler) error {
