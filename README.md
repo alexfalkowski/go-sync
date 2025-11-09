@@ -26,7 +26,6 @@ As most operations are async, errors need to be handled differently. As an examp
 ```go
 import (
     "context"
-    "time"
 
     "github.com/alexfalkowski/go-sync"
 )
@@ -92,11 +91,7 @@ if err != nil {
 We have a generic pool based on [sync.Pool](https://pkg.go.dev/sync#Pool) and a [bytes.Buffer](https://pkg.go.dev/bytes#Buffer) pool.
 
 ```go
-import (
-    "bytes"
-
-    "github.com/alexfalkowski/go-sync/bytes"
-)
+import "github.com/alexfalkowski/go-sync/bytes"
 
 pool := bytes.NewBufferPool()
 
@@ -115,4 +110,23 @@ var value atomic.Value[int]
 
 value.Store(1)
 v := value.Load() // Do something with v.
+```
+
+## Worker
+
+We have a worker based on [sync.WaitGroup](https://pkg.go.dev/sync#WaitGroup) and [buffered channels](https://go.dev/tour/concurrency/3).
+
+```go
+import (
+    "context"
+
+    "github.com/alexfalkowski/go-sync"
+)
+
+worker := sync.NewWorker(10)
+
+worker.Schedule(context.Background(), func(context.Context) error {
+    // Do something important.
+    return nil
+})
 ```
