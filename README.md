@@ -9,22 +9,32 @@
 
 A library to handle concurrency.
 
+## Background
+
+These are some examples that this library was inspired by:
+
+- <https://go.dev/blog/pipelines>
+- <https://go.dev/talks/2012/concurrency.slide>
+- <https://gobyexample.com/timeouts>
+- <https://go.dev/wiki/Timeouts>
+- <https://github.com/lotusirous/go-concurrency-patterns>
+
 ## Wait
 
 Wait will wait for the handler to complete or continue. As an example:
 
 ```go
 import (
-	"context"
-	"time"
+    "context"
+    "time"
 
-	"github.com/alexfalkowski/go-sync"
+    "github.com/alexfalkowski/go-sync"
 )
 
 
 err := sync.Wait(context.Background(), time.Second, func(context.Context) error {
     // Do something important.
-	  return nil
+    return nil
 })
 if err != nil {
     // Do something with err.
@@ -37,16 +47,16 @@ Timeout will wait for the handler to complete or timeout. As an example:
 
 ```go
 import (
-	"context"
-	"time"
+    "context"
+    "time"
 
-	"github.com/alexfalkowski/go-sync"
+    "github.com/alexfalkowski/go-sync"
 )
 
 // Do something with err.
 err := sync.Timeout(context.Background(), time.Second, func(context.Context) error {
     // Do something important.
-	  return nil
+    return nil
 })
 if err != nil {
     if sync.IsTimeoutError(err) {
@@ -63,9 +73,9 @@ We have a generic pool based on [sync.Pool](https://pkg.go.dev/sync#Pool) and a 
 
 ```go
 import (
-	"bytes"
+    "bytes"
 
-	"github.com/alexfalkowski/go-sync"
+    "github.com/alexfalkowski/go-sync"
 )
 
 pool := sync.NewBufferPool()
