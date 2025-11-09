@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## Unreleased
 
+## [v0.8.0](https://github.com/alexfalkowski/go-sync/releases/tag/v0.8.0) - 2025-11-09
+
+- [`f93e81b`](https://github.com/alexfalkowski/go-sync/commit/f93e81b6cf63636859d47d6f4986dd53c16eee1f) feat(atomic): add generic value (#9)
+
 ## [v0.7.0](https://github.com/alexfalkowski/go-sync/releases/tag/v0.7.0) - 2025-11-09
 
 - [`ba4b3a8`](https://github.com/alexfalkowski/go-sync/commit/ba4b3a83112a3404ed9552a930c36ca0a73b6879) feat(error): add ability to handle errors (#8)
