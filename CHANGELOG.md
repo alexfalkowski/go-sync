@@ -6,6 +6,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## Unreleased
 
+## [v0.9.0](https://github.com/alexfalkowski/go-sync/releases/tag/v0.9.0) - 2025-11-09
+
+- [`b4bd16d`](https://github.com/alexfalkowski/go-sync/commit/b4bd16dee71e10cd98c064ed83a796ddf5e8071a) feat(worker): add based on buffered channels and a waitgroup (#11)
+- [`142a9f7`](https://github.com/alexfalkowski/go-sync/commit/142a9f7042fae87dc90faef6a426915597fd4a67) refactor(error): rename var (#10)
+
 ## [v0.8.0](https://github.com/alexfalkowski/go-sync/releases/tag/v0.8.0) - 2025-11-09
 
 - [`f93e81b`](https://github.com/alexfalkowski/go-sync/commit/f93e81b6cf63636859d47d6f4986dd53c16eee1f) feat(atomic): add generic value (#9)
