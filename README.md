@@ -19,6 +19,26 @@ These are some examples that this library was inspired by:
 - <https://go.dev/wiki/Timeouts>
 - <https://github.com/lotusirous/go-concurrency-patterns>
 
+## Errors
+
+As most operations are async, errors need to be handled differently. As an example:
+
+```go
+import (
+    "context"
+    "time"
+
+    "github.com/alexfalkowski/go-sync"
+)
+
+sync.SetErrorHandler(func(ctx context.Context, err error) error {
+    // You can check the original context.
+    // You can check the original error.
+    // You can return the error or ignore it.
+    return err
+})
+```
+
 ## Wait
 
 Wait will wait for the handler to complete or continue. As an example:
