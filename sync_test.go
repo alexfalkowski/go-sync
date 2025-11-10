@@ -61,33 +61,3 @@ func TestTimeoutOperationError(t *testing.T) {
 	require.Error(t, err)
 	require.True(t, sync.IsTimeoutError(err))
 }
-
-func TestWorkerSchedule(t *testing.T) {
-	startTime := time.Now()
-	sync.SetErrorHandler(sync.DefaultErrorHandler)
-	w := sync.NewWorker(10)
-	for range 20 {
-		w.Schedule(t.Context(), func(context.Context) error {
-			time.Sleep(time.Second)
-			return nil
-		})
-	}
-	w.Wait()
-
-	require.WithinDuration(t, time.Now(), startTime, 3*time.Second)
-}
-
-func TestWorkerScheduleError(t *testing.T) {
-	startTime := time.Now()
-	sync.SetErrorHandler(func(_ context.Context, err error) error {
-		require.ErrorIs(t, err, context.Canceled)
-		return err
-	})
-	w := sync.NewWorker(1)
-	w.Schedule(t.Context(), func(context.Context) error {
-		return context.Canceled
-	})
-	w.Wait()
-
-	require.WithinDuration(t, time.Now(), startTime, time.Second)
-}

@@ -3,10 +3,7 @@ package sync
 import (
 	"context"
 	"errors"
-	"sync"
 	"time"
-
-	"github.com/alexfalkowski/go-sync/atomic"
 )
 
 // Handler used for sync.
@@ -15,7 +12,7 @@ type Handler func(context.Context) error
 // ErrorHandler used for sync.
 type ErrorHandler func(context.Context, error) error
 
-var errorHandler atomic.Value[ErrorHandler]
+var errorHandler Value[ErrorHandler]
 
 func init() {
 	SetErrorHandler(DefaultErrorHandler)
@@ -76,57 +73,4 @@ func Timeout(ctx context.Context, timeout time.Duration, handler Handler) error 
 	case <-time.After(timeout):
 		return ctx.Err()
 	}
-}
-
-// NewPool of type T.
-func NewPool[T any]() *Pool[T] {
-	pool := &sync.Pool{
-		New: func() any {
-			return new(T)
-		},
-	}
-	return &Pool[T]{pool: pool}
-}
-
-// Pool of type T.
-type Pool[T any] struct {
-	pool *sync.Pool
-}
-
-// Get an item of type T.
-func (p *Pool[T]) Get() *T {
-	return p.pool.Get().(*T)
-}
-
-// Put an item of type T back.
-func (p *Pool[T]) Put(b *T) {
-	p.pool.Put(b)
-}
-
-// NewWorker for sync.
-func NewWorker(count int) *Worker {
-	return &Worker{
-		requests: make(chan struct{}, count),
-		wg:       sync.WaitGroup{},
-	}
-}
-
-// Worker for sync.
-type Worker struct {
-	requests chan struct{}
-	wg       sync.WaitGroup
-}
-
-// Schedule a handler.
-func (w *Worker) Schedule(ctx context.Context, handler Handler) {
-	w.requests <- struct{}{}
-	w.wg.Go(func() {
-		_ = handleError(ctx, handler(ctx))
-		<-w.requests
-	})
-}
-
-// Wait will wait for the worker to complete.
-func (w *Worker) Wait() {
-	w.wg.Wait()
 }

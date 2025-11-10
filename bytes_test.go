@@ -1,14 +1,14 @@
-package bytes_test
+package sync_test
 
 import (
 	"testing"
 
-	"github.com/alexfalkowski/go-sync/bytes"
+	"github.com/alexfalkowski/go-sync"
 	"github.com/stretchr/testify/require"
 )
 
 func TestPool(t *testing.T) {
-	pool := bytes.NewBufferPool()
+	pool := sync.NewBufferPool()
 	buffer := pool.Get()
 	defer pool.Put(buffer)
 
@@ -16,7 +16,7 @@ func TestPool(t *testing.T) {
 }
 
 func BenchmarkPool(b *testing.B) {
-	pool := bytes.NewBufferPool()
+	pool := sync.NewBufferPool()
 
 	b.Run("Get", func(b *testing.B) {
 		for b.Loop() {
