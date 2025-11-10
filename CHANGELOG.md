@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## Unreleased
 
+## [v0.10.0](https://github.com/alexfalkowski/go-sync/releases/tag/v0.10.0) - 2025-11-10
+
+- [`7d0650a`](https://github.com/alexfalkowski/go-sync/commit/7d0650a8806639dda20a6852850c5f2aa8794699) feat(package): move to sync (#12)
+
 ## [v0.9.0](https://github.com/alexfalkowski/go-sync/releases/tag/v0.9.0) - 2025-11-09
 
 - [`b4bd16d`](https://github.com/alexfalkowski/go-sync/commit/b4bd16dee71e10cd98c064ed83a796ddf5e8071a) feat(worker): add based on buffered channels and a waitgroup (#11)
