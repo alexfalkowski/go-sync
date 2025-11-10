@@ -10,48 +10,59 @@ import (
 )
 
 func TestWaitNoError(t *testing.T) {
-	require.NoError(t, sync.Wait(t.Context(), time.Second, func(context.Context) error {
-		return nil
+	require.NoError(t, sync.Wait(t.Context(), time.Second, sync.Lifecycle{
+		OnRun: func(context.Context) error {
+			return nil
+		},
 	}))
 }
 
 func TestWaitError(t *testing.T) {
-	require.Error(t, sync.Wait(t.Context(), time.Second, func(context.Context) error {
-		return context.Canceled
+	require.Error(t, sync.Wait(t.Context(), time.Second, sync.Lifecycle{
+		OnRun: func(context.Context) error {
+			return context.Canceled
+		},
 	}))
 }
 
 func TestWaitContinue(t *testing.T) {
-	require.NoError(t, sync.Wait(t.Context(), time.Microsecond, func(context.Context) error {
-		time.Sleep(time.Second)
-		return nil
+	require.NoError(t, sync.Wait(t.Context(), time.Microsecond, sync.Lifecycle{
+		OnRun: func(context.Context) error {
+			time.Sleep(time.Second)
+			return nil
+		},
 	}))
 }
 
 func TestTimeoutNoError(t *testing.T) {
-	require.NoError(t, sync.Timeout(t.Context(), time.Second, func(context.Context) error {
-		return nil
+	require.NoError(t, sync.Timeout(t.Context(), time.Second, sync.Lifecycle{
+		OnRun: func(context.Context) error {
+			return nil
+		},
 	}))
 }
 
 func TestTimeoutError(t *testing.T) {
-	err := sync.TimeoutWithError(t.Context(), time.Second,
-		func(context.Context) error {
+	err := sync.Timeout(t.Context(), time.Second, sync.Lifecycle{
+		OnRun: func(context.Context) error {
 			return context.Canceled
 		},
-		func(_ context.Context, err error) error {
+		OnError: func(_ context.Context, err error) error {
 			require.ErrorIs(t, err, context.Canceled)
 			return err
-		})
+		},
+	})
 
 	require.Error(t, err)
 	require.False(t, sync.IsTimeoutError(err))
 }
 
 func TestTimeoutOperationError(t *testing.T) {
-	err := sync.Timeout(t.Context(), time.Microsecond, func(ctx context.Context) error {
-		time.Sleep(time.Second)
-		return ctx.Err()
+	err := sync.Timeout(t.Context(), time.Microsecond, sync.Lifecycle{
+		OnRun: func(ctx context.Context) error {
+			time.Sleep(time.Second)
+			return ctx.Err()
+		},
 	})
 
 	require.Error(t, err)
