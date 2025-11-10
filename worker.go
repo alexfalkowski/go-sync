@@ -3,6 +3,7 @@ package sync
 import (
 	"context"
 	"sync"
+	"time"
 )
 
 // NewWorker for sync.
@@ -19,13 +20,22 @@ type Worker struct {
 	wg       sync.WaitGroup
 }
 
-// Schedule a handler.
-func (w *Worker) Schedule(ctx context.Context, hook Hook) {
-	w.requests <- struct{}{}
-	w.wg.Go(func() {
-		_ = hook.Error(ctx, hook.OnRun(ctx))
-		<-w.requests
-	})
+// Schedule a handler if it can be scheduled within the timeout.
+func (w *Worker) Schedule(ctx context.Context, timeout time.Duration, hook Hook) error {
+	ctx, cancel := context.WithTimeout(ctx, timeout)
+	defer cancel()
+
+	select {
+	case w.requests <- struct{}{}:
+		w.wg.Go(func() {
+			_ = hook.Error(ctx, hook.OnRun(ctx))
+			<-w.requests
+		})
+	case <-ctx.Done():
+		return ctx.Err()
+	}
+
+	return nil
 }
 
 // Wait will wait for the worker to complete.
