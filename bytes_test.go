@@ -17,11 +17,8 @@ func TestPool(t *testing.T) {
 
 func BenchmarkPool(b *testing.B) {
 	pool := sync.NewBufferPool()
-
-	b.Run("Get", func(b *testing.B) {
-		for b.Loop() {
-			buffer := pool.Get()
-			pool.Put(buffer)
-		}
-	})
+	for b.Loop() {
+		buffer := pool.Get()
+		pool.Put(buffer)
+	}
 }
