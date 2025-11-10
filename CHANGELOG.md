@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## Unreleased
 
+## [v0.15.0](https://github.com/alexfalkowski/go-sync/releases/tag/v0.15.0) - 2025-11-10
+
+- [`5ca2553`](https://github.com/alexfalkowski/go-sync/commit/5ca25536cce97b6ecda20a9548b76fbbd58b9126) feat(hook): rename var (#19)
+
 ## [v0.14.0](https://github.com/alexfalkowski/go-sync/releases/tag/v0.14.0) - 2025-11-10
 
 - [`5ebf9b8`](https://github.com/alexfalkowski/go-sync/commit/5ebf9b8cff770ccd290cbd08e78d758f201950d5) feat(hook): rename lifecycle (#18)
