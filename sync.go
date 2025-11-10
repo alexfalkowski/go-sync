@@ -38,10 +38,10 @@ func IsTimeoutError(err error) bool {
 }
 
 // Wait will wait for the handler to complete or continue.
-func Wait(ctx context.Context, timeout time.Duration, lc Hook) error {
+func Wait(ctx context.Context, timeout time.Duration, hook Hook) error {
 	ch := make(chan error, 1)
 	go func() {
-		ch <- lc.Error(ctx, lc.OnRun(ctx))
+		ch <- hook.Error(ctx, hook.OnRun(ctx))
 	}()
 
 	select {
@@ -53,13 +53,13 @@ func Wait(ctx context.Context, timeout time.Duration, lc Hook) error {
 }
 
 // Timeout will wait for the handler to complete or timeout.
-func Timeout(ctx context.Context, timeout time.Duration, lc Hook) error {
+func Timeout(ctx context.Context, timeout time.Duration, hook Hook) error {
 	ctx, cancel := context.WithTimeout(ctx, timeout)
 	defer cancel()
 
 	ch := make(chan error, 1)
 	go func() {
-		ch <- lc.Error(ctx, lc.OnRun(ctx))
+		ch <- hook.Error(ctx, hook.OnRun(ctx))
 	}()
 
 	select {
