@@ -48,7 +48,7 @@ func TestTimeoutError(t *testing.T) {
 	})
 
 	require.Error(t, err)
-	require.True(t, sync.IsTimeoutError(err))
+	require.False(t, sync.IsTimeoutError(err))
 }
 
 func TestTimeoutOperationError(t *testing.T) {

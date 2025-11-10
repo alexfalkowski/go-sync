@@ -37,9 +37,9 @@ func handleError(ctx context.Context, err error) error {
 	return nil
 }
 
-// IsTimeoutError checks if the error is deadline exceeded or canceled.
+// IsTimeoutError checks if the error is deadline exceeded.
 func IsTimeoutError(err error) bool {
-	return errors.Is(err, context.DeadlineExceeded) || errors.Is(err, context.Canceled)
+	return errors.Is(err, context.DeadlineExceeded)
 }
 
 // Wait will wait for the handler to complete or continue.
