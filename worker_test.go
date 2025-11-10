@@ -74,4 +74,5 @@ func BenchmarkWorker(b *testing.B) {
 			},
 		})
 	}
+	worker.Wait()
 }
