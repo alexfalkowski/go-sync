@@ -20,7 +20,7 @@ type Worker struct {
 }
 
 // Schedule a handler.
-func (w *Worker) Schedule(ctx context.Context, lc Lifecycle) {
+func (w *Worker) Schedule(ctx context.Context, lc Hook) {
 	w.requests <- struct{}{}
 	w.wg.Go(func() {
 		_ = lc.Error(ctx, lc.OnRun(ctx))

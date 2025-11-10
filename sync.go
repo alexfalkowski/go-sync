@@ -12,14 +12,14 @@ type Handler func(context.Context) error
 // ErrorHandler used for sync.
 type ErrorHandler func(context.Context, error) error
 
-// Lifecycle for operations.
-type Lifecycle struct {
+// Hook for operations.
+type Hook struct {
 	OnRun   Handler
 	OnError ErrorHandler
 }
 
 // Error will handle the error with the provided handler or use DefaultErrorHandler.
-func (l *Lifecycle) Error(ctx context.Context, err error) error {
+func (l *Hook) Error(ctx context.Context, err error) error {
 	if l.OnError == nil {
 		l.OnError = DefaultErrorHandler
 	}
@@ -38,7 +38,7 @@ func IsTimeoutError(err error) bool {
 }
 
 // Wait will wait for the handler to complete or continue.
-func Wait(ctx context.Context, timeout time.Duration, lc Lifecycle) error {
+func Wait(ctx context.Context, timeout time.Duration, lc Hook) error {
 	ch := make(chan error, 1)
 	go func() {
 		ch <- lc.Error(ctx, lc.OnRun(ctx))
@@ -53,7 +53,7 @@ func Wait(ctx context.Context, timeout time.Duration, lc Lifecycle) error {
 }
 
 // Timeout will wait for the handler to complete or timeout.
-func Timeout(ctx context.Context, timeout time.Duration, lc Lifecycle) error {
+func Timeout(ctx context.Context, timeout time.Duration, lc Hook) error {
 	ctx, cancel := context.WithTimeout(ctx, timeout)
 	defer cancel()
 

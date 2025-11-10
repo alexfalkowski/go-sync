@@ -13,7 +13,7 @@ func TestWorkerSchedule(t *testing.T) {
 	startTime := time.Now()
 	worker := sync.NewWorker(10)
 	for range 20 {
-		worker.Schedule(t.Context(), sync.Lifecycle{
+		worker.Schedule(t.Context(), sync.Hook{
 			OnRun: func(context.Context) error {
 				time.Sleep(time.Second)
 				return nil
@@ -28,7 +28,7 @@ func TestWorkerSchedule(t *testing.T) {
 func TestWorkerScheduleError(t *testing.T) {
 	startTime := time.Now()
 	worker := sync.NewWorker(1)
-	worker.Schedule(t.Context(), sync.Lifecycle{
+	worker.Schedule(t.Context(), sync.Hook{
 		OnRun: func(context.Context) error {
 			return context.Canceled
 		},
@@ -46,7 +46,7 @@ func BenchmarkWorker(b *testing.B) {
 	worker := sync.NewWorker(b.N)
 	b.Run("Schedule", func(b *testing.B) {
 		for b.Loop() {
-			worker.Schedule(b.Context(), sync.Lifecycle{
+			worker.Schedule(b.Context(), sync.Hook{
 				OnRun: func(context.Context) error {
 					return nil
 				},
