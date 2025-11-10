@@ -21,21 +21,15 @@ These are some examples that this library was inspired by:
 
 ## Errors
 
-As most operations are async, errors need to be handled differently. As an example:
+As most operations are async, errors need to be handled differently. Each func will take an error handler:
 
 ```go
-import (
-    "context"
-
-    "github.com/alexfalkowski/go-sync"
-)
-
-sync.SetErrorHandler(func(ctx context.Context, err error) error {
+func(ctx context.Context, err error) error {
     // You can check the original context.
     // You can check the original error.
     // You can return the error or ignore it.
     return err
-})
+}
 ```
 
 ## Wait
