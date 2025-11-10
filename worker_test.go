@@ -67,13 +67,11 @@ func TestWorkerScheduleError(t *testing.T) {
 
 func BenchmarkWorker(b *testing.B) {
 	worker := sync.NewWorker(b.N)
-	b.Run("Schedule", func(b *testing.B) {
-		for b.Loop() {
-			_ = worker.Schedule(b.Context(), time.Second, sync.Hook{
-				OnRun: func(context.Context) error {
-					return nil
-				},
-			})
-		}
-	})
+	for b.Loop() {
+		_ = worker.Schedule(b.Context(), time.Second, sync.Hook{
+			OnRun: func(context.Context) error {
+				return nil
+			},
+		})
+	}
 }
