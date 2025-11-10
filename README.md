@@ -110,13 +110,14 @@ We have a worker based on [sync.WaitGroup](https://pkg.go.dev/sync#WaitGroup) an
 ```go
 import (
     "context"
+    "time"
 
     "github.com/alexfalkowski/go-sync"
 )
 
 worker := sync.NewWorker(10)
 
-worker.Schedule(context.Background(), sync.Hook{
+err := worker.Schedule(context.Background(), time.Second, sync.Hook{
     OnRun: func(context.Context) error {
         // Do something important.
         return nil
@@ -126,4 +127,11 @@ worker.Schedule(context.Background(), sync.Hook{
         return err
     },
 })
+if err != nil {
+    if sync.IsTimeoutError(err) {
+        // Do something with timeout.
+    }
+
+    // Do something with error.
+}
 ```
