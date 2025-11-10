@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## Unreleased
 
+## [v0.11.0](https://github.com/alexfalkowski/go-sync/releases/tag/v0.11.0) - 2025-11-10
+
+- [`267dc51`](https://github.com/alexfalkowski/go-sync/commit/267dc510d8c92d7eeb139a6455060e121333c8f8) feat(timeout): wait for ctx.Done() (#14)
+
 ## [v0.10.1](https://github.com/alexfalkowski/go-sync/releases/tag/v0.10.1) - 2025-11-10
 
 - [`899230b`](https://github.com/alexfalkowski/go-sync/commit/899230b64e5935c36df6790f45e69484b2866416) fix(timeout): return context.DeadlineExceeded (#13)
