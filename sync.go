@@ -71,6 +71,6 @@ func Timeout(ctx context.Context, timeout time.Duration, handler Handler) error 
 	case err := <-ch:
 		return err
 	case <-time.After(timeout):
-		return ctx.Err()
+		return context.DeadlineExceeded
 	}
 }
