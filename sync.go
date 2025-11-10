@@ -70,7 +70,7 @@ func Timeout(ctx context.Context, timeout time.Duration, handler Handler) error 
 	select {
 	case err := <-ch:
 		return err
-	case <-time.After(timeout):
-		return context.DeadlineExceeded
+	case <-ctx.Done():
+		return ctx.Err()
 	}
 }
