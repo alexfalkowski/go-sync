@@ -10,7 +10,7 @@ import (
 )
 
 func TestWaitNoError(t *testing.T) {
-	require.NoError(t, sync.Wait(t.Context(), time.Second, sync.Lifecycle{
+	require.NoError(t, sync.Wait(t.Context(), time.Second, sync.Hook{
 		OnRun: func(context.Context) error {
 			return nil
 		},
@@ -18,7 +18,7 @@ func TestWaitNoError(t *testing.T) {
 }
 
 func TestWaitError(t *testing.T) {
-	require.Error(t, sync.Wait(t.Context(), time.Second, sync.Lifecycle{
+	require.Error(t, sync.Wait(t.Context(), time.Second, sync.Hook{
 		OnRun: func(context.Context) error {
 			return context.Canceled
 		},
@@ -26,7 +26,7 @@ func TestWaitError(t *testing.T) {
 }
 
 func TestWaitContinue(t *testing.T) {
-	require.NoError(t, sync.Wait(t.Context(), time.Microsecond, sync.Lifecycle{
+	require.NoError(t, sync.Wait(t.Context(), time.Microsecond, sync.Hook{
 		OnRun: func(context.Context) error {
 			time.Sleep(time.Second)
 			return nil
@@ -35,7 +35,7 @@ func TestWaitContinue(t *testing.T) {
 }
 
 func TestTimeoutNoError(t *testing.T) {
-	require.NoError(t, sync.Timeout(t.Context(), time.Second, sync.Lifecycle{
+	require.NoError(t, sync.Timeout(t.Context(), time.Second, sync.Hook{
 		OnRun: func(context.Context) error {
 			return nil
 		},
@@ -43,7 +43,7 @@ func TestTimeoutNoError(t *testing.T) {
 }
 
 func TestTimeoutError(t *testing.T) {
-	err := sync.Timeout(t.Context(), time.Second, sync.Lifecycle{
+	err := sync.Timeout(t.Context(), time.Second, sync.Hook{
 		OnRun: func(context.Context) error {
 			return context.Canceled
 		},
@@ -58,7 +58,7 @@ func TestTimeoutError(t *testing.T) {
 }
 
 func TestTimeoutOperationError(t *testing.T) {
-	err := sync.Timeout(t.Context(), time.Microsecond, sync.Lifecycle{
+	err := sync.Timeout(t.Context(), time.Microsecond, sync.Hook{
 		OnRun: func(ctx context.Context) error {
 			time.Sleep(time.Second)
 			return ctx.Err()

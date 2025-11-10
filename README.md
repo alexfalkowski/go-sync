@@ -31,7 +31,7 @@ import (
     "github.com/alexfalkowski/go-sync"
 )
 
-err := sync.Wait(context.Background(), time.Second, &sync.Lifecycle{
+err := sync.Wait(context.Background(), time.Second, sync.Hook{
     OnRun: func(context.Context) error {
         // Do something important.
         return nil
@@ -58,7 +58,7 @@ import (
     "github.com/alexfalkowski/go-sync"
 )
 
-err := sync.Timeout(context.Background(), time.Second, &sync.Lifecycle{
+err := sync.Timeout(context.Background(), time.Second, sync.Hook{
     OnRun: func(context.Context) error {
         // Do something important.
         return nil
@@ -116,7 +116,7 @@ import (
 
 worker := sync.NewWorker(10)
 
-worker.Schedule(context.Background(), &sync.Lifecycle{
+worker.Schedule(context.Background(), sync.Hook{
     OnRun: func(context.Context) error {
         // Do something important.
         return nil
