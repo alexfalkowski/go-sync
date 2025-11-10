@@ -1,19 +1,15 @@
-package bytes
+package sync
 
-import (
-	"bytes"
-
-	"github.com/alexfalkowski/go-sync"
-)
+import "bytes"
 
 // NewBufferPool for bytes.
 func NewBufferPool() *BufferPool {
-	return &BufferPool{sync.NewPool[bytes.Buffer]()}
+	return &BufferPool{NewPool[bytes.Buffer]()}
 }
 
 // BufferPool for bytes.
 type BufferPool struct {
-	*sync.Pool[bytes.Buffer]
+	*Pool[bytes.Buffer]
 }
 
 // Get a new buffer.

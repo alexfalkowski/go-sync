@@ -91,9 +91,9 @@ if err != nil {
 We have a generic pool based on [sync.Pool](https://pkg.go.dev/sync#Pool) and a [bytes.Buffer](https://pkg.go.dev/bytes#Buffer) pool.
 
 ```go
-import "github.com/alexfalkowski/go-sync/bytes"
+import "github.com/alexfalkowski/go-sync"
 
-pool := bytes.NewBufferPool()
+pool := sync.NewBufferPool()
 
 buffer := pool.Get() // Do something with buffer.
 defer pool.Put(buffer)
@@ -104,9 +104,9 @@ defer pool.Put(buffer)
 We have a generic value based on [atomic.Value](https://pkg.go.dev/sync/atomic#Value).
 
 ```go
-import "github.com/alexfalkowski/go-sync/atomic"
+import "github.com/alexfalkowski/go-sync"
 
-var value atomic.Value[int]
+var value sync.Value[int]
 
 value.Store(1)
 v := value.Load() // Do something with v.
