@@ -12,6 +12,21 @@ type Handler func(context.Context) error
 // ErrorHandler used for sync.
 type ErrorHandler func(context.Context, error) error
 
+// Lifecycle for operations.
+type Lifecycle struct {
+	OnRun   Handler
+	OnError ErrorHandler
+}
+
+// Error will handle the error with the provided handler or use DefaultErrorHandler.
+func (l *Lifecycle) Error(ctx context.Context, err error) error {
+	if l.OnError == nil {
+		l.OnError = DefaultErrorHandler
+	}
+
+	return l.OnError(ctx, err)
+}
+
 // DefaultErrorHandler for handling errors.
 var DefaultErrorHandler ErrorHandler = func(_ context.Context, err error) error {
 	return err
@@ -23,15 +38,10 @@ func IsTimeoutError(err error) bool {
 }
 
 // Wait will wait for the handler to complete or continue.
-func Wait(ctx context.Context, timeout time.Duration, handler Handler) error {
-	return WaitWithError(ctx, timeout, handler, DefaultErrorHandler)
-}
-
-// WaitWithError will wait for the handler to complete or continue and handle errors.
-func WaitWithError(ctx context.Context, timeout time.Duration, handler Handler, errorHandler ErrorHandler) error {
+func Wait(ctx context.Context, timeout time.Duration, lc Lifecycle) error {
 	ch := make(chan error, 1)
 	go func() {
-		ch <- errorHandler(ctx, handler(ctx))
+		ch <- lc.Error(ctx, lc.OnRun(ctx))
 	}()
 
 	select {
@@ -43,18 +53,13 @@ func WaitWithError(ctx context.Context, timeout time.Duration, handler Handler, 
 }
 
 // Timeout will wait for the handler to complete or timeout.
-func Timeout(ctx context.Context, timeout time.Duration, handler Handler) error {
-	return TimeoutWithError(ctx, timeout, handler, DefaultErrorHandler)
-}
-
-// TimeoutWithError will wait for the handler to complete or timeout and handle errors.
-func TimeoutWithError(ctx context.Context, timeout time.Duration, handler Handler, errorHandler ErrorHandler) error {
+func Timeout(ctx context.Context, timeout time.Duration, lc Lifecycle) error {
 	ctx, cancel := context.WithTimeout(ctx, timeout)
 	defer cancel()
 
 	ch := make(chan error, 1)
 	go func() {
-		ch <- errorHandler(ctx, handler(ctx))
+		ch <- lc.Error(ctx, lc.OnRun(ctx))
 	}()
 
 	select {

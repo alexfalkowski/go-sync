@@ -20,15 +20,10 @@ type Worker struct {
 }
 
 // Schedule a handler.
-func (w *Worker) Schedule(ctx context.Context, handler Handler) {
-	w.ScheduleWithError(ctx, handler, DefaultErrorHandler)
-}
-
-// ScheduleWithError schedules a handler with error handling.
-func (w *Worker) ScheduleWithError(ctx context.Context, handler Handler, errorHandler ErrorHandler) {
+func (w *Worker) Schedule(ctx context.Context, lc Lifecycle) {
 	w.requests <- struct{}{}
 	w.wg.Go(func() {
-		_ = errorHandler(ctx, handler(ctx))
+		_ = lc.Error(ctx, lc.OnRun(ctx))
 		<-w.requests
 	})
 }

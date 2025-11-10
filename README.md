@@ -19,19 +19,6 @@ These are some examples that this library was inspired by:
 - <https://go.dev/wiki/Timeouts>
 - <https://github.com/lotusirous/go-concurrency-patterns>
 
-## Errors
-
-As most operations are async, errors need to be handled differently. Each func will take an error handler:
-
-```go
-func(ctx context.Context, err error) error {
-    // You can check the original context.
-    // You can check the original error.
-    // You can return the error or ignore it.
-    return err
-}
-```
-
 ## Wait
 
 Wait will wait for the handler to complete or continue. As an example:
@@ -44,11 +31,16 @@ import (
     "github.com/alexfalkowski/go-sync"
 )
 
-
-err := sync.Wait(context.Background(), time.Second, func(context.Context) error {
-    // Do something important.
-    return nil
-})
+err := sync.Wait(context.Background(), time.Second, &sync.Lifecycle{
+    OnRun: func(context.Context) error {
+        // Do something important.
+        return nil
+    },
+    OnError: func(_ context.Context, err error) error {
+        // Do something with err.
+        return err
+    },
+ })
 if err != nil {
     // Do something with err.
 }
@@ -66,11 +58,16 @@ import (
     "github.com/alexfalkowski/go-sync"
 )
 
-// Do something with err.
-err := sync.Timeout(context.Background(), time.Second, func(context.Context) error {
-    // Do something important.
-    return nil
-})
+err := sync.Timeout(context.Background(), time.Second, &sync.Lifecycle{
+    OnRun: func(context.Context) error {
+        // Do something important.
+        return nil
+    },
+    OnError: func(_ context.Context, err error) error {
+        // Do something with err.
+        return err
+    },
+ })
 if err != nil {
     if sync.IsTimeoutError(err) {
         // Do something with timeout.
@@ -119,8 +116,14 @@ import (
 
 worker := sync.NewWorker(10)
 
-worker.Schedule(context.Background(), func(context.Context) error {
-    // Do something important.
-    return nil
+worker.Schedule(context.Background(), &sync.Lifecycle{
+    OnRun: func(context.Context) error {
+        // Do something important.
+        return nil
+    },
+    OnError: func(_ context.Context, err error) error {
+        // Do something with err.
+        return err
+    },
 })
 ```
