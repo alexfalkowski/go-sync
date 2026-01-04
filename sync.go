@@ -24,7 +24,10 @@ func (l *Hook) Error(ctx context.Context, err error) error {
 		l.OnError = DefaultErrorHandler
 	}
 
-	return l.OnError(ctx, err)
+	if err != nil {
+		return l.OnError(ctx, err)
+	}
+	return nil
 }
 
 // DefaultErrorHandler for handling errors.
