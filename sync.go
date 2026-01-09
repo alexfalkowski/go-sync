@@ -6,6 +6,9 @@ import (
 	"time"
 )
 
+// ErrNoOnRunProvided is returned when no OnRun handler is provided.
+var ErrNoOnRunProvided = errors.New("no OnRun handler provided")
+
 // Handler used for sync.
 type Handler func(context.Context) error
 
@@ -18,7 +21,7 @@ type Hook struct {
 	OnError ErrorHandler
 }
 
-// Error will handle the error with the provided handler or use DefaultErrorHandler.
+// Error will handle the error with the provided handler.
 func (l *Hook) Error(ctx context.Context, err error) error {
 	if err != nil {
 		if l.OnError != nil {
@@ -36,6 +39,10 @@ func IsTimeoutError(err error) bool {
 
 // Wait will wait for the handler to complete or continue.
 func Wait(ctx context.Context, timeout time.Duration, hook Hook) error {
+	if hook.OnRun == nil {
+		return ErrNoOnRunProvided
+	}
+
 	ch := make(chan error, 1)
 	go func() {
 		ch <- hook.Error(ctx, hook.OnRun(ctx))
@@ -52,6 +59,10 @@ func Wait(ctx context.Context, timeout time.Duration, hook Hook) error {
 
 // Timeout will wait for the handler to complete or timeout.
 func Timeout(ctx context.Context, timeout time.Duration, hook Hook) error {
+	if hook.OnRun == nil {
+		return ErrNoOnRunProvided
+	}
+
 	ctx, cancel := context.WithTimeout(ctx, timeout)
 	defer cancel()
 

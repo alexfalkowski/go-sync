@@ -18,6 +18,7 @@ func TestWaitNoError(t *testing.T) {
 }
 
 func TestWaitError(t *testing.T) {
+	require.ErrorIs(t, sync.Wait(t.Context(), time.Second, sync.Hook{}), sync.ErrNoOnRunProvided)
 	require.Error(t, sync.Wait(t.Context(), time.Second, sync.Hook{
 		OnRun: func(context.Context) error {
 			return context.Canceled
@@ -43,6 +44,8 @@ func TestTimeoutNoError(t *testing.T) {
 }
 
 func TestTimeoutError(t *testing.T) {
+	require.ErrorIs(t, sync.Timeout(t.Context(), time.Second, sync.Hook{}), sync.ErrNoOnRunProvided)
+
 	err := sync.Timeout(t.Context(), time.Second, sync.Hook{
 		OnRun: func(context.Context) error {
 			return context.Canceled
