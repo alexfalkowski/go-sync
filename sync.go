@@ -43,6 +43,9 @@ func Wait(ctx context.Context, timeout time.Duration, hook Hook) error {
 		return ErrNoOnRunProvided
 	}
 
+	timer := time.NewTimer(timeout)
+	defer timer.Stop()
+
 	ch := make(chan error, 1)
 	go func() {
 		ch <- hook.Error(ctx, hook.OnRun(ctx))
@@ -52,7 +55,7 @@ func Wait(ctx context.Context, timeout time.Duration, hook Hook) error {
 	select {
 	case err := <-ch:
 		return err
-	case <-time.After(timeout):
+	case <-timer.C:
 		return nil
 	}
 }
