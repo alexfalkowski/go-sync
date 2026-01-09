@@ -57,6 +57,8 @@ func Wait(ctx context.Context, timeout time.Duration, hook Hook) error {
 		return err
 	case <-timer.C:
 		return nil
+	case <-ctx.Done():
+		return nil
 	}
 }
 

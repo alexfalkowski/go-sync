@@ -35,6 +35,17 @@ func TestWaitContinue(t *testing.T) {
 	}))
 }
 
+func TestWaitContextCancel(t *testing.T) {
+	ctx, cancel := context.WithCancel(t.Context())
+	cancel()
+
+	require.NoError(t, sync.Wait(ctx, time.Second, sync.Hook{
+		OnRun: func(context.Context) error {
+			return nil
+		},
+	}))
+}
+
 func TestTimeoutNoError(t *testing.T) {
 	require.NoError(t, sync.Timeout(t.Context(), time.Second, sync.Hook{
 		OnRun: func(context.Context) error {
@@ -51,12 +62,11 @@ func TestTimeoutError(t *testing.T) {
 			return context.Canceled
 		},
 		OnError: func(_ context.Context, err error) error {
-			require.ErrorIs(t, err, context.Canceled)
 			return err
 		},
 	})
 
-	require.Error(t, err)
+	require.ErrorIs(t, err, context.Canceled)
 	require.False(t, sync.IsTimeoutError(err))
 }
 
