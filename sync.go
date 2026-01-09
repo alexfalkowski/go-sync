@@ -20,19 +20,13 @@ type Hook struct {
 
 // Error will handle the error with the provided handler or use DefaultErrorHandler.
 func (l *Hook) Error(ctx context.Context, err error) error {
-	if l.OnError == nil {
-		l.OnError = DefaultErrorHandler
-	}
-
 	if err != nil {
-		return l.OnError(ctx, err)
+		if l.OnError != nil {
+			return l.OnError(ctx, err)
+		}
+		return err
 	}
 	return nil
-}
-
-// DefaultErrorHandler for handling errors.
-var DefaultErrorHandler ErrorHandler = func(_ context.Context, err error) error {
-	return err
 }
 
 // IsTimeoutError checks if the error is deadline exceeded.
@@ -45,6 +39,7 @@ func Wait(ctx context.Context, timeout time.Duration, hook Hook) error {
 	ch := make(chan error, 1)
 	go func() {
 		ch <- hook.Error(ctx, hook.OnRun(ctx))
+		close(ch)
 	}()
 
 	select {
@@ -63,6 +58,7 @@ func Timeout(ctx context.Context, timeout time.Duration, hook Hook) error {
 	ch := make(chan error, 1)
 	go func() {
 		ch <- hook.Error(ctx, hook.OnRun(ctx))
+		close(ch)
 	}()
 
 	select {
