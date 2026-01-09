@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## Unreleased
 
+## [v0.21.0](https://github.com/alexfalkowski/go-sync/releases/tag/v0.21.0) - 2026-01-09
+
+- [`0bb1edc`](https://github.com/alexfalkowski/go-sync/commit/0bb1edc11856e5593562fcccc9bbd5ed53833dad) feat(wait): handle cancel context (#57)
+
 ## [v0.20.0](https://github.com/alexfalkowski/go-sync/releases/tag/v0.20.0) - 2026-01-09
 
 - [`b150359`](https://github.com/alexfalkowski/go-sync/commit/b150359c2c704ff8f4087b2105a4dcdee1eae5a2) feat(wait): create a timer and stop it if hook.OnRun finishes (#56)
