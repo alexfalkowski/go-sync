@@ -6,6 +6,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## Unreleased
 
+## [v0.18.0](https://github.com/alexfalkowski/go-sync/releases/tag/v0.18.0) - 2026-01-09
+
+- [`0894a44`](https://github.com/alexfalkowski/go-sync/commit/0894a44ebd2e822dfc1f3c4bca16c7673a398297) feat(hook): remove default error handler (#54)
+- [`c140961`](https://github.com/alexfalkowski/go-sync/commit/c140961d03bafe8d1867216fe6a1600150668c27) build(ci): use latest published images (#53)
+- [`7357801`](https://github.com/alexfalkowski/go-sync/commit/73578010c597cc408d66f3e8694b380df2b77079) build(deps): upgraded github.com/alexfalkowski/bin (#52)
+- [`89b9036`](https://github.com/alexfalkowski/go-sync/commit/89b9036577cce249f25c5712c89d9c37ec64a0b7) build(ci): use latest published images (#51)
+- [`20c2d8c`](https://github.com/alexfalkowski/go-sync/commit/20c2d8c5c4fc07b1dff473ff2be3ea058dbb4a56) build(deps): bump bin from `664d367` to `302ba69` (#50)
+
 ## [v0.17.0](https://github.com/alexfalkowski/go-sync/releases/tag/v0.17.0) - 2026-01-04
 
 - [`97ab7e5`](https://github.com/alexfalkowski/go-sync/commit/97ab7e59e38d02276dfa79926f31382ab768ad4d) feat(worker): call OnError when we have an error (#49)
