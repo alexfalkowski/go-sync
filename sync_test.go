@@ -41,7 +41,7 @@ func TestWaitContextCancel(t *testing.T) {
 
 	require.NoError(t, sync.Wait(ctx, time.Second, sync.Hook{
 		OnRun: func(context.Context) error {
-			return nil
+			return context.Canceled
 		},
 	}))
 }
