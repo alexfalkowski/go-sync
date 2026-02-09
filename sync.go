@@ -43,10 +43,6 @@ func Wait(ctx context.Context, timeout time.Duration, hook Hook) error {
 		return ErrNoOnRunProvided
 	}
 
-	if ctx.Err() != nil {
-		return nil
-	}
-
 	timer := time.NewTimer(timeout)
 	defer timer.Stop()
 
@@ -70,10 +66,6 @@ func Wait(ctx context.Context, timeout time.Duration, hook Hook) error {
 func Timeout(ctx context.Context, timeout time.Duration, hook Hook) error {
 	if hook.OnRun == nil {
 		return ErrNoOnRunProvided
-	}
-
-	if ctx.Err() != nil {
-		return ctx.Err()
 	}
 
 	ctx, cancel := context.WithTimeout(ctx, timeout)
