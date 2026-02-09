@@ -6,6 +6,28 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## Unreleased
 
+## [v0.22.0](https://github.com/alexfalkowski/go-sync/releases/tag/v0.22.0) - 2026-02-09
+
+- [`ade03e4`](https://github.com/alexfalkowski/go-sync/commit/ade03e4f757335ab5f3f222deb08db51677a6f7b) feat(map): add a generic version of sync.Map (#77)
+- [`d92d748`](https://github.com/alexfalkowski/go-sync/commit/d92d7481d7b5be4257961e75e46061a65afbb197) build(ci): use latest published images (#76)
+- [`b534c0c`](https://github.com/alexfalkowski/go-sync/commit/b534c0ccbb36cbc50c373852135c72ffbbcd6cf0) build(ci): use latest published images (#74)
+- [`3b2b032`](https://github.com/alexfalkowski/go-sync/commit/3b2b0320cdd21e806ab9a390810e3964a8bd9f5a) build(ci): use latest published images (#73)
+- [`2f443dd`](https://github.com/alexfalkowski/go-sync/commit/2f443ddbc6365c526848c81104c0a97b405b0e30) build(ci): use latest published images (#72)
+- [`2149025`](https://github.com/alexfalkowski/go-sync/commit/2149025931b592559456b47e7839dddf324248ff) build(ci): use latest published images (#71)
+- [`b85f3fe`](https://github.com/alexfalkowski/go-sync/commit/b85f3feccba7d118ee413e3bd6cfc7b0fc1d98b1) build(ci): use latest published images (#70)
+- [`5c46d5b`](https://github.com/alexfalkowski/go-sync/commit/5c46d5b5f77ebc6be0e39eee538904f4ecda2d72) build(ci): use latest published images (#69)
+- [`b264322`](https://github.com/alexfalkowski/go-sync/commit/b26432289df07c8d41731e200314f6ff38a0ee7b) build(ci): use latest published images (#68)
+- [`d176813`](https://github.com/alexfalkowski/go-sync/commit/d176813911eec39ac77fe340db97d35f5743381a) build(deps): upgraded github.com/alexfalkowski/bin (#67)
+- [`0ab148e`](https://github.com/alexfalkowski/go-sync/commit/0ab148ef676f0a4e3e178d9d5dda851c1a432a33) build(license): move to mit (#66)
+- [`f9fbf1a`](https://github.com/alexfalkowski/go-sync/commit/f9fbf1a656b55be96ba0fda5af89b8130ec99fc6) build(ci): use latest published images (#65)
+- [`2067760`](https://github.com/alexfalkowski/go-sync/commit/2067760fe4cf63f5a9e4b1f07f214bacd976016d) build(ci): use latest published images (#64)
+- [`4ef1315`](https://github.com/alexfalkowski/go-sync/commit/4ef1315f09cd84eb4bb2339211edbd399937d917) build(ci): use latest published images (#63)
+- [`34d43df`](https://github.com/alexfalkowski/go-sync/commit/34d43dff98132133a26dfe9dd39abc084593dbd0) test(wait): make sure no error (#62)
+- [`5d8f755`](https://github.com/alexfalkowski/go-sync/commit/5d8f75594479b93aa517de282ea8b6613c46efd0) build(ci): use latest published images (#61)
+- [`bc92b3d`](https://github.com/alexfalkowski/go-sync/commit/bc92b3de9f09a73e007e0333ff66eeff8623a8ea) build(deps): upgraded github.com/alexfalkowski/bin (#60)
+- [`1a43923`](https://github.com/alexfalkowski/go-sync/commit/1a439235fcc408af9f2f78fe4a63ad310982fc67) build(ci): use latest published images (#59)
+- [`2896a7a`](https://github.com/alexfalkowski/go-sync/commit/2896a7ac832d2db7a17f2fa3fbcbb69c33383c55) build(ci): use latest published images (#58)
+
 ## [v0.21.0](https://github.com/alexfalkowski/go-sync/releases/tag/v0.21.0) - 2026-01-09
 
 - [`0bb1edc`](https://github.com/alexfalkowski/go-sync/commit/0bb1edc11856e5593562fcccc9bbd5ed53833dad) feat(wait): handle cancel context (#57)
