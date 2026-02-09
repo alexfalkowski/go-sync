@@ -46,12 +46,52 @@ func TestWaitContextCancel(t *testing.T) {
 	}))
 }
 
+func TestWaitContextAlreadyCancelled(t *testing.T) {
+	ctx, cancel := context.WithCancel(t.Context())
+	cancel()
+
+	ran := make(chan struct{}, 1)
+	require.NoError(t, sync.Wait(ctx, time.Second, sync.Hook{
+		OnRun: func(context.Context) error {
+			ran <- struct{}{}
+			return nil
+		},
+	}))
+
+	select {
+	case <-ran:
+		require.FailNow(t, "OnRun should not have been called")
+	case <-time.After(50 * time.Millisecond):
+	}
+}
+
 func TestTimeoutNoError(t *testing.T) {
 	require.NoError(t, sync.Timeout(t.Context(), time.Second, sync.Hook{
 		OnRun: func(context.Context) error {
 			return nil
 		},
 	}))
+}
+
+func TestTimeoutContextAlreadyCancelled(t *testing.T) {
+	ctx, cancel := context.WithCancel(t.Context())
+	cancel()
+
+	ran := make(chan struct{}, 1)
+	err := sync.Timeout(ctx, time.Second, sync.Hook{
+		OnRun: func(context.Context) error {
+			ran <- struct{}{}
+			return nil
+		},
+	})
+
+	require.ErrorIs(t, err, context.Canceled)
+
+	select {
+	case <-ran:
+		require.FailNow(t, "OnRun should not have been called")
+	case <-time.After(50 * time.Millisecond):
+	}
 }
 
 func TestTimeoutError(t *testing.T) {
