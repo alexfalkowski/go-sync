@@ -48,8 +48,11 @@ func TestWorkerScheduleTimeout(t *testing.T) {
 }
 
 func TestWorkerScheduleError(t *testing.T) {
-	startTime := time.Now()
 	worker := sync.NewWorker(1)
+
+	require.ErrorIs(t, worker.Schedule(t.Context(), time.Second, sync.Hook{}), sync.ErrNoOnRunProvided)
+
+	startTime := time.Now()
 	err := worker.Schedule(t.Context(), time.Second, sync.Hook{
 		OnRun: func(context.Context) error {
 			return context.Canceled

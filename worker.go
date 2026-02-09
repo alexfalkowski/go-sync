@@ -22,6 +22,10 @@ type Worker struct {
 
 // Schedule a handler if it can be scheduled within the timeout.
 func (w *Worker) Schedule(ctx context.Context, timeout time.Duration, hook Hook) error {
+	if hook.OnRun == nil {
+		return ErrNoOnRunProvided
+	}
+
 	ctx, cancel := context.WithTimeout(ctx, timeout)
 	defer cancel()
 
