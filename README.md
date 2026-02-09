@@ -97,7 +97,7 @@ We have a generic value based on [atomic.Value](https://pkg.go.dev/sync/atomic#V
 ```go
 import "github.com/alexfalkowski/go-sync"
 
-var value sync.Value[int]
+value := sync.NewValue[int]()
 
 value.Store(1)
 v := value.Load() // Do something with v.
