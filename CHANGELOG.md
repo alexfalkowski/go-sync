@@ -6,6 +6,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## Unreleased
 
+## [v0.22.1](https://github.com/alexfalkowski/go-sync/releases/tag/v0.22.1) - 2026-02-09
+
+- [`5538779`](https://github.com/alexfalkowski/go-sync/commit/55387790050df0709d67d3c7eb22a90edb16f817) fix(map): typos in comments (#79)
+- [`0516eab`](https://github.com/alexfalkowski/go-sync/commit/0516eab0368a6b58638c2ea820781f71dd481848) docs(ai): add AGENTS.md (#78)
+
 ## [v0.22.0](https://github.com/alexfalkowski/go-sync/releases/tag/v0.22.0) - 2026-02-09
 
 - [`ade03e4`](https://github.com/alexfalkowski/go-sync/commit/ade03e4f757335ab5f3f222deb08db51677a6f7b) feat(map): add a generic version of sync.Map (#77)
