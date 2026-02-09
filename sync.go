@@ -22,10 +22,10 @@ type Hook struct {
 }
 
 // Error will handle the error with the provided handler.
-func (l *Hook) Error(ctx context.Context, err error) error {
+func (h *Hook) Error(ctx context.Context, err error) error {
 	if err != nil {
-		if l.OnError != nil {
-			return l.OnError(ctx, err)
+		if h.OnError != nil {
+			return h.OnError(ctx, err)
 		}
 		return err
 	}
