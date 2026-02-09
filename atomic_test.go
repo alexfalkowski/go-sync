@@ -8,7 +8,10 @@ import (
 )
 
 func TestValue(t *testing.T) {
-	var value sync.Value[int]
+	value := sync.NewValue[int]()
+
+	require.Equal(t, 0, value.Load())
+	require.Equal(t, 0, value.Swap(2))
 
 	value.Store(1)
 	require.Equal(t, 1, value.Load())
