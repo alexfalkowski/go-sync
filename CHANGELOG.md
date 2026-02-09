@@ -6,6 +6,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## Unreleased
 
+## [v0.24.0](https://github.com/alexfalkowski/go-sync/releases/tag/v0.24.0) - 2026-02-09
+
+- [`dbc2a6a`](https://github.com/alexfalkowski/go-sync/commit/dbc2a6a6135cd426c6516c1f5e421bda4a7e2cad) feat(worker): use uint (#80)
+- [`7e306c4`](https://github.com/alexfalkowski/go-sync/commit/7e306c4e5b425ed90264099f662602dc134cf5e6) build(deps): bump bin from `50ee2c1` to `dc92464` (#75)
+
 ## [v0.23.0](https://github.com/alexfalkowski/go-sync/releases/tag/v0.23.0) - 2026-02-09
 
 - [`7c6b820`](https://github.com/alexfalkowski/go-sync/commit/7c6b820357d583937753d3be6b9788b00929d047) feat(hook): parameter should be h (#81)
