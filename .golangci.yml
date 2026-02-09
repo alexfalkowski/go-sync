@@ -13,6 +13,8 @@ linters:
     - nlreturn
     - noinlineerr
     - paralleltest
+    - predeclared
+    - revive
     - varnamelen
     - wrapcheck
     - wsl

@@ -135,3 +135,25 @@ if err != nil {
     // Do something with error.
 }
 ```
+
+## Map
+
+We have a generic map based on [sync.Map](https://pkg.go.dev/sync#Map).
+
+```go
+import "github.com/alexfalkowski/go-sync"
+
+m := sync.NewMap[string, int]()
+
+m.Store("one", 1)
+
+v, ok := m.Load("one")
+if ok {
+    // Do something with v.
+}
+
+m.Range(func(k string, v int) bool {
+    // Do something with k and v.
+    return true
+})
+```
