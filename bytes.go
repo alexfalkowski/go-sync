@@ -2,12 +2,12 @@ package sync
 
 import "bytes"
 
-// NewBufferPool returns a BufferPool that reuses bytes.Buffer instances.
+// NewBufferPool returns a BufferPool.
 func NewBufferPool() *BufferPool {
 	return &BufferPool{pool: NewPool[bytes.Buffer]()}
 }
 
-// BufferPool provides pooled *bytes.Buffer values.
+// BufferPool provides pooled [bytes.Buffer] values.
 type BufferPool struct {
 	pool *Pool[bytes.Buffer]
 }
@@ -17,7 +17,7 @@ func (p *BufferPool) Get() *bytes.Buffer {
 	return p.pool.Get()
 }
 
-// Put resets buffer and returns it to the pool.
+// Put resets buffer and puts it back into the pool.
 func (p *BufferPool) Put(buffer *bytes.Buffer) {
 	if buffer == nil {
 		return

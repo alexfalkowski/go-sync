@@ -2,7 +2,7 @@ package sync
 
 import "sync"
 
-// NewPool of type T.
+// NewPool returns an initialized Pool for values of type T.
 func NewPool[T any]() *Pool[T] {
 	pool := &sync.Pool{
 		New: func() any {
@@ -12,17 +12,19 @@ func NewPool[T any]() *Pool[T] {
 	return &Pool[T]{pool: pool}
 }
 
-// Pool of type T.
+// Pool is a typed wrapper around [sync.Pool].
+//
+// The zero value is not ready for use; use [NewPool].
 type Pool[T any] struct {
 	pool *sync.Pool
 }
 
-// Get an item of type T.
+// Get returns an item of type T.
 func (p *Pool[T]) Get() *T {
 	return p.pool.Get().(*T)
 }
 
-// Put an item of type T back.
+// Put puts an item of type T back into the pool.
 func (p *Pool[T]) Put(b *T) {
 	p.pool.Put(b)
 }
