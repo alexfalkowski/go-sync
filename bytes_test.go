@@ -14,6 +14,8 @@ func TestPool(t *testing.T) {
 
 	require.NotNil(t, buffer)
 	require.Empty(t, pool.Copy(buffer))
+	require.NotPanics(t, func() { pool.Put(nil) })
+	require.NotPanics(t, func() { pool.Copy(nil) })
 }
 
 func BenchmarkPool(b *testing.B) {
