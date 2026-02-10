@@ -88,6 +88,10 @@ pool := sync.NewBufferPool()
 
 buffer := pool.Get() // Do something with buffer.
 defer pool.Put(buffer)
+
+// Do something with buffer, then copy it to a []byte.
+bs := pool.Copy(buffer)
+_ = bs
 ```
 
 ## Atomic
