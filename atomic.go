@@ -2,18 +2,21 @@ package sync
 
 import "sync/atomic"
 
-// NewValue creates a new atomic value with the given zero value.
+// NewValue returns a new Value.
 func NewValue[T any]() Value[T] {
 	return Value[T]{v: atomic.Value{}}
 }
 
-// Value is a generic atomic value.
+// Value is a typed wrapper around [atomic.Value].
+//
+// The zero value is ready for use. Load and Swap return the zero value of T
+// when no value has been stored yet.
 type Value[T any] struct {
 	v    atomic.Value
 	zero T
 }
 
-// Load is an alias for [atomic.Value.Load].
+// Load returns the stored value, or the zero value of T if none has been stored.
 func (v *Value[T]) Load() T {
 	value := v.v.Load()
 	if value != nil {
@@ -22,12 +25,12 @@ func (v *Value[T]) Load() T {
 	return v.zero
 }
 
-// Store is an alias for [atomic.Value.Store].
+// Store stores val.
 func (v *Value[T]) Store(val T) {
 	v.v.Store(val)
 }
 
-// Swap is an alias for [atomic.Value.Swap].
+// Swap stores n and returns the previous value, or the zero value of T if none was stored.
 func (v *Value[T]) Swap(n T) T {
 	value := v.v.Swap(n)
 	if value != nil {
@@ -36,7 +39,7 @@ func (v *Value[T]) Swap(n T) T {
 	return v.zero
 }
 
-// CompareAndSwap is an alias for [atomic.Value.CompareAndSwap].
+// CompareAndSwap executes the compare-and-swap operation.
 func (v *Value[T]) CompareAndSwap(o, n T) bool {
 	return v.v.CompareAndSwap(o, n)
 }

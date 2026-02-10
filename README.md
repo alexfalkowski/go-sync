@@ -21,7 +21,11 @@ These are some examples that this library was inspired by:
 
 ## Wait
 
-Wait will wait for the handler to complete or continue. As an example:
+Wait will wait for the handler to complete or continue.
+
+If the timeout expires (or the context is canceled) first, it returns nil without waiting for the handler to finish.
+
+As an example:
 
 ```go
 import (
@@ -48,7 +52,11 @@ if err != nil {
 
 ## Timeout
 
-Timeout will wait for the handler to complete or timeout. As an example:
+Timeout will wait for the handler to complete or timeout.
+
+If the timeout expires (or the context is canceled) first, it returns ctx.Err().
+
+As an example:
 
 ```go
 import (
@@ -111,6 +119,8 @@ v := value.Load() // Do something with v.
 
 We have a worker based on [sync.WaitGroup](https://pkg.go.dev/sync#WaitGroup) and [buffered channels](https://go.dev/tour/concurrency/3).
 
+Schedule only returns an error if the handler could not be scheduled within the timeout (or if OnRun is nil). Handler errors are passed to Hook.OnError (if set) and are not returned.
+
 ```go
 import (
     "context"
@@ -128,7 +138,7 @@ err := worker.Schedule(context.Background(), time.Second, sync.Hook{
     },
     OnError: func(_ context.Context, err error) error {
         // Do something with err.
-        return err
+        return nil
     },
 })
 if err != nil {
@@ -136,13 +146,17 @@ if err != nil {
         // Do something with timeout.
     }
 
-    // Do something with error.
+    // Do something with scheduling error.
 }
+
+worker.Wait()
 ```
 
 ## Map
 
 We have a generic map based on [sync.Map](https://pkg.go.dev/sync#Map).
+
+The zero value of Map is ready for use (NewMap is optional). Note: storing a nil interface value can cause methods that type-assert internally (for example, Range) to panic.
 
 ```go
 import "github.com/alexfalkowski/go-sync"

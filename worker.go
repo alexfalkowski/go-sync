@@ -6,7 +6,7 @@ import (
 	"time"
 )
 
-// NewWorker for sync.
+// NewWorker returns a Worker that limits the number of concurrent scheduled handlers to count.
 func NewWorker(count uint) *Worker {
 	return &Worker{
 		requests: make(chan struct{}, count),
@@ -14,13 +14,16 @@ func NewWorker(count uint) *Worker {
 	}
 }
 
-// Worker for sync.
+// Worker schedules handlers with a bounded level of concurrency.
 type Worker struct {
 	requests chan struct{}
 	wg       sync.WaitGroup
 }
 
-// Schedule a handler if it can be scheduled within the timeout.
+// Schedule schedules hook.OnRun to run asynchronously if it can be scheduled within the given timeout.
+//
+// It returns ctx.Err() if the context is done before the handler can be scheduled.
+// Errors returned by OnRun are handled via hook.OnError (if set) and are not returned.
 func (w *Worker) Schedule(ctx context.Context, timeout time.Duration, hook Hook) error {
 	if hook.OnRun == nil {
 		return ErrNoOnRunProvided
@@ -42,7 +45,7 @@ func (w *Worker) Schedule(ctx context.Context, timeout time.Duration, hook Hook)
 	return nil
 }
 
-// Wait will wait for the worker to complete.
+// Wait blocks until all scheduled handlers have completed.
 func (w *Worker) Wait() {
 	w.wg.Wait()
 }
