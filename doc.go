@@ -6,7 +6,7 @@
 //
 // The package contains:
 //
-//   - Hook-based helpers for running an operation with shared error handling.
+//   - Hook-based helpers for running an operation with centralized error handling.
 //   - Wait and Timeout helpers for coordinating an operation with a timeout.
 //   - Worker: a bounded scheduler for running operations concurrently.
 //   - Typed wrappers around sync.Pool, sync.Map, and sync/atomic.Value.
@@ -37,7 +37,7 @@
 // # Worker
 //
 // Worker schedules hook.OnRun to run asynchronously while bounding concurrency.
-// Schedule will block until the handler is scheduled or the provided timeout
+// Schedule blocks until the handler is scheduled or the provided timeout
 // (via context.WithTimeout) expires. Errors returned by OnRun are routed to
 // hook.OnError (if set) and are not returned by Schedule. Use Worker.Wait to
 // wait for all scheduled handlers to finish.

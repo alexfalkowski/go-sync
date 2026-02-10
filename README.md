@@ -21,7 +21,7 @@ These are some examples that this library was inspired by:
 
 ## Wait
 
-Wait will wait for the handler to complete or continue.
+Wait runs the handler and waits up to the timeout for it to complete.
 
 If the timeout expires (or the context is canceled) first, it returns nil without waiting for the handler to finish.
 
@@ -52,9 +52,9 @@ if err != nil {
 
 ## Timeout
 
-Timeout will wait for the handler to complete or timeout.
+Timeout runs the handler with a derived context that has the provided timeout.
 
-If the timeout expires (or the context is canceled) first, it returns ctx.Err().
+If the timeout expires (or the context is canceled) first, it returns ctx.Err() (typically context.DeadlineExceeded or context.Canceled).
 
 As an example:
 
@@ -117,9 +117,9 @@ v := value.Load() // Do something with v.
 
 ## Worker
 
-We have a worker based on [sync.WaitGroup](https://pkg.go.dev/sync#WaitGroup) and [buffered channels](https://go.dev/tour/concurrency/3).
+We have a worker based on [sync.WaitGroup](https://pkg.go.dev/sync#WaitGroup) and [buffered channels](https://go.dev/tour/concurrency/3) to bound concurrent execution.
 
-Schedule returns an error if the handler could not be scheduled before the timeout expires, if the context is canceled first, or if OnRun is nil. Handler errors are passed to Hook.OnError (if set) and are not returned.
+Schedule returns ctx.Err() if it cannot schedule the handler before the timeout expires or the context is canceled, and returns ErrNoOnRunProvided if OnRun is nil. Handler errors are passed to Hook.OnError (if set) and are not returned.
 
 ```go
 import (
