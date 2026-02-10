@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## Unreleased
 
+## [v1.2.0](https://github.com/alexfalkowski/go-sync/releases/tag/v1.2.0) - 2026-02-10
+
+- [`1984ccf`](https://github.com/alexfalkowski/go-sync/commit/1984ccf84e402eeb9bbd8c9c4400981be462a52e) feat(bytes): hide the pool in the buffer pool (#86)
+
 ## [v1.1.0](https://github.com/alexfalkowski/go-sync/releases/tag/v1.1.0) - 2026-02-10
 
 - [`e3d98b8`](https://github.com/alexfalkowski/go-sync/commit/e3d98b8ad21596105c242637f13ef68967a4c740) feat(bytes): add copy to buffer pool (#85)
