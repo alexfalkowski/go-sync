@@ -7,7 +7,7 @@
 
 # go-sync
 
-A library to handle concurrency.
+A small Go library (package `sync`) that provides concurrency helpers.
 
 ## Background
 
@@ -32,7 +32,7 @@ import (
     "context"
     "time"
 
-    "github.com/alexfalkowski/go-sync"
+    sync "github.com/alexfalkowski/go-sync"
 )
 
 err := sync.Wait(context.Background(), time.Second, sync.Hook{
@@ -44,7 +44,7 @@ err := sync.Wait(context.Background(), time.Second, sync.Hook{
         // Do something with err.
         return err
     },
- })
+})
 if err != nil {
     // Do something with err.
 }
@@ -63,7 +63,7 @@ import (
     "context"
     "time"
 
-    "github.com/alexfalkowski/go-sync"
+    sync "github.com/alexfalkowski/go-sync"
 )
 
 err := sync.Timeout(context.Background(), time.Second, sync.Hook{
@@ -75,7 +75,7 @@ err := sync.Timeout(context.Background(), time.Second, sync.Hook{
         // Do something with err.
         return err
     },
- })
+})
 if err != nil {
     if sync.IsTimeoutError(err) {
         // Do something with timeout.
@@ -90,7 +90,7 @@ if err != nil {
 We have a generic pool based on [sync.Pool](https://pkg.go.dev/sync#Pool) and a [bytes.Buffer](https://pkg.go.dev/bytes#Buffer) pool.
 
 ```go
-import "github.com/alexfalkowski/go-sync"
+import sync "github.com/alexfalkowski/go-sync"
 
 pool := sync.NewBufferPool()
 
@@ -107,7 +107,7 @@ _ = bs
 We have a generic value based on [atomic.Value](https://pkg.go.dev/sync/atomic#Value).
 
 ```go
-import "github.com/alexfalkowski/go-sync"
+import sync "github.com/alexfalkowski/go-sync"
 
 value := sync.NewValue[int]()
 
@@ -119,14 +119,14 @@ v := value.Load() // Do something with v.
 
 We have a worker based on [sync.WaitGroup](https://pkg.go.dev/sync#WaitGroup) and [buffered channels](https://go.dev/tour/concurrency/3).
 
-Schedule only returns an error if the handler could not be scheduled within the timeout (or if OnRun is nil). Handler errors are passed to Hook.OnError (if set) and are not returned.
+Schedule returns an error if the handler could not be scheduled before the timeout expires, if the context is canceled first, or if OnRun is nil. Handler errors are passed to Hook.OnError (if set) and are not returned.
 
 ```go
 import (
     "context"
     "time"
 
-    "github.com/alexfalkowski/go-sync"
+    sync "github.com/alexfalkowski/go-sync"
 )
 
 worker := sync.NewWorker(10)
@@ -159,7 +159,7 @@ We have a generic map based on [sync.Map](https://pkg.go.dev/sync#Map).
 The zero value of Map is ready for use (NewMap is optional). Note: storing a nil interface value can cause methods that type-assert internally (for example, Range) to panic.
 
 ```go
-import "github.com/alexfalkowski/go-sync"
+import sync "github.com/alexfalkowski/go-sync"
 
 m := sync.NewMap[string, int]()
 
