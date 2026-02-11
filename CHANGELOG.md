@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## Unreleased
 
+## [v1.6.0](https://github.com/alexfalkowski/go-sync/releases/tag/v1.6.0) - 2026-02-11
+
+- [`7d4d2ae`](https://github.com/alexfalkowski/go-sync/commit/7d4d2ae249ef045eb262dba1b48929ffa8ab4fee) feat(map): struct with 64 pointer bytes could be 56 (#92)
+
 ## [v1.5.0](https://github.com/alexfalkowski/go-sync/releases/tag/v1.5.0) - 2026-02-10
 
 - [`0004114`](https://github.com/alexfalkowski/go-sync/commit/00041140f9eef7fe6050e21ef19feeece2cba4e6) feat(docs): make sure they are accurate (#89)
