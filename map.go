@@ -13,8 +13,8 @@ func NewMap[K comparable, V any]() Map[K, V] {
 //
 // The zero value is ready for use.
 type Map[K comparable, V any] struct {
-	m    sync.Map
 	zero V
+	m    sync.Map
 }
 
 // Load returns the value stored in the map for a key.
