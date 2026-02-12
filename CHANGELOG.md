@@ -6,6 +6,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## Unreleased
 
+## [v1.7.0](https://github.com/alexfalkowski/go-sync/releases/tag/v1.7.0) - 2026-02-12
+
+- [`41b12fb`](https://github.com/alexfalkowski/go-sync/commit/41b12fb6aeceeaab6befe8f65e4b1686f00a2035) feat(go): use go v1.26 (#97)
+- [`b643787`](https://github.com/alexfalkowski/go-sync/commit/b6437872b7565090a106834b2f1f2fe90263d6eb) build(deps): bump bin from `dc92464` to `60f3a4b` (#94)
+- [`95a3feb`](https://github.com/alexfalkowski/go-sync/commit/95a3feba483f4537537ccaaa7178e9f2bbff40b3) build(ci): use arm.large (#96)
+- [`a41d51f`](https://github.com/alexfalkowski/go-sync/commit/a41d51f5f275fffcce2f818ba356fff8817d8d9d) build(ci): use latest published images (#95)
+- [`65b4097`](https://github.com/alexfalkowski/go-sync/commit/65b409783c9e46cc603509bf61c3e6a3a1e79e1c) build(ci): use latest published images (#93)
+
 ## [v1.6.0](https://github.com/alexfalkowski/go-sync/releases/tag/v1.6.0) - 2026-02-11
 
 - [`7d4d2ae`](https://github.com/alexfalkowski/go-sync/commit/7d4d2ae249ef045eb262dba1b48929ffa8ab4fee) feat(map): struct with 64 pointer bytes could be 56 (#92)
