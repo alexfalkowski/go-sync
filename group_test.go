@@ -9,7 +9,7 @@ import (
 )
 
 func TestGroup(t *testing.T) {
-	g := sync.NewGroup[string]()
+	g := sync.NewSingleFlightGroup[string]()
 
 	v, err, shared := g.Do("test1", func() (string, error) {
 		return "yes", nil

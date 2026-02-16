@@ -21,9 +21,13 @@ These are some examples that this library was inspired by:
 
 ## Wait
 
-Wait runs the handler and waits up to the timeout for it to complete.
+Wait runs `Hook.OnRun` asynchronously and waits up to the provided timeout for it to complete.
 
-If the timeout expires (or the context is canceled) first, it returns nil without waiting for the handler to finish.
+If `OnRun` completes first, `Wait` returns the result of `Hook.OnError` (if provided) applied to the error returned by `OnRun`.
+
+If the timeout expires (or the context is canceled) first, `Wait` returns `nil` immediately **without waiting for `OnRun` to finish**. This means `OnRun` may continue running in the background, and any error it eventually produces is discarded.
+
+Use `Wait` when you want a best-effort “wait up to N” behavior and you do not need cancellation to be propagated into the work. If you need cancellation and a timeout error, use `Timeout`.
 
 As an example:
 
@@ -52,9 +56,11 @@ if err != nil {
 
 ## Timeout
 
-Timeout runs the handler with a derived context that has the provided timeout.
+Timeout runs `Hook.OnRun` with a derived context created by `context.WithTimeout`.
 
-If the timeout expires (or the context is canceled) first, it returns ctx.Err() (typically context.DeadlineExceeded or context.Canceled).
+If `OnRun` completes first, `Timeout` returns the result of `Hook.OnError` (if provided) applied to the error returned by `OnRun`.
+
+If the timeout expires (or the context is canceled) first, `Timeout` returns `ctx.Err()` (typically `context.DeadlineExceeded` or `context.Canceled`). Unlike `Wait`, cancellation is propagated to `OnRun` via the derived context, so well-behaved handlers should observe `ctx.Done()` and exit promptly.
 
 As an example:
 
@@ -154,14 +160,50 @@ worker.Wait()
 
 ## Group
 
+### ErrorGroup
+
+`ErrorGroup` is a convenience alias for [`errgroup.Group`](https://pkg.go.dev/golang.org/x/sync/errgroup#Group). It behaves exactly like `errgroup.Group`.
+
+```go
+import (
+    "context"
+    "fmt"
+
+    sync "github.com/alexfalkowski/go-sync"
+)
+
+var g sync.ErrorGroup
+
+g.Go(func() error {
+    // Do something important.
+    return nil
+})
+
+g.Go(func() error {
+    return fmt.Errorf("boom")
+})
+
+// Wait returns the first non-nil error (if any), once all goroutines complete.
+if err := g.Wait(); err != nil {
+    _ = context.Cause(context.Background()) // no-op example usage; remove in real code
+    // Do something with err.
+}
+```
+
+### SingleFlightGroup
+
 We have a generic group based on [singleflight.Group](https://pkg.go.dev/golang.org/x/sync/singleflight#Group) to suppress duplicate function calls.
 
-Do returns the value, error, and whether the result was shared with other callers.
+For a given key, the first caller executes the provided function, and concurrent callers for the same key wait for the first call to complete and receive the same (value, error) result.
+
+`Do` returns the value, error, and whether the result was shared with other callers (`shared == true` means this call did not execute the function itself).
+
+If the function returns a non-nil error, `Do` returns the zero value of `T` along with that error.
 
 ```go
 import sync "github.com/alexfalkowski/go-sync"
 
-g := sync.NewGroup[int]()
+g := sync.NewSingleFlightGroup[int]()
 
 v, err, shared := g.Do("key", func() (int, error) {
     // Do something important.
@@ -169,6 +211,8 @@ v, err, shared := g.Do("key", func() (int, error) {
 })
 _, _, _ = v, err, shared
 
+// Forget clears any in-flight or completed result for the key,
+// so a future Do("key", ...) will execute the function again.
 g.Forget("key")
 ```
 
