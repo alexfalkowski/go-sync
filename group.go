@@ -1,33 +1,48 @@
 package sync
 
-import "golang.org/x/sync/singleflight"
+import (
+	"golang.org/x/sync/errgroup"
+	"golang.org/x/sync/singleflight"
+)
 
-// NewGroup creates a new [Group] instance.
+// ErrorGroup is an alias for [errgroup.Group].
 //
-// A Group is a generic wrapper around [singleflight.Group] that provides type-safe
+// It is provided for convenience so users of this package can refer to an
+// errgroup without importing `golang.org/x/sync/errgroup` directly.
+//
+// Note: this is a type alias, not a wrapper. All behavior, including how errors
+// are captured and how `Wait` behaves, is defined by `errgroup.Group`.
+type ErrorGroup = errgroup.Group
+
+// NewSingleFlightGroup creates a new [SingleFlightGroup] instance.
+//
+// A SingleFlightGroup is a generic wrapper around [singleflight.Group] that provides type-safe
 // results (via the type parameter T) while preserving singleflight semantics.
-func NewGroup[T any]() *Group[T] {
-	return &Group[T]{
+func NewSingleFlightGroup[T any]() *SingleFlightGroup[T] {
+	return &SingleFlightGroup[T]{
 		group: &singleflight.Group{},
 	}
 }
 
-// Group suppresses duplicate executions of functions associated with the same key.
+// SingleFlightGroup suppresses duplicate executions of functions associated with the same key.
 //
-// It is a thin, generic wrapper around [singleflight.Group]. For a given key, the
-// first caller runs the provided function, and concurrent callers for the same
-// key wait for the first call to complete and receive the same result.
+// It is a thin, generic wrapper around [singleflight.Group] that provides
+// type-safe results (via the type parameter T) while preserving singleflight
+// semantics.
 //
-// The type parameter T describes the value returned from [Group.Do]. If the
-// function returns a non-nil error, Do returns the zero value of T along with
-// that error.
+// For a given key, the first caller executes the provided function and
+// concurrent callers for the same key wait for that execution to complete and
+// receive the same result.
 //
-// Note: this type relies on the underlying singleflight implementation storing
-// and returning values as interface{} (any) and performing a type assertion back
-// to T. As long as all calls to Do on a given Group use the same T (enforced by
-// the generic type) and the provided function returns a value of type T, the
-// assertion will succeed.
-type Group[T any] struct {
+// The type parameter T describes the value returned from [SingleFlightGroup.Do].
+// If the function returns a non-nil error, Do returns the zero value of T along
+// with that error.
+//
+// Implementation detail: the underlying singleflight implementation stores and
+// returns values as `any`, so this wrapper performs a type assertion back to T.
+// As long as the function passed to Do returns a value of type T, the assertion
+// will succeed.
+type SingleFlightGroup[T any] struct {
 	group *singleflight.Group
 	zero  T
 }
@@ -43,7 +58,7 @@ type Group[T any] struct {
 //   - err is the error returned by fn.
 //   - shared reports whether the result was shared with other callers (i.e. this
 //     call did not execute fn itself).
-func (g *Group[T]) Do(key string, fn func() (T, error)) (T, error, bool) {
+func (g *SingleFlightGroup[T]) Do(key string, fn func() (T, error)) (T, error, bool) {
 	v, err, shared := g.group.Do(key, func() (any, error) {
 		return fn()
 	})
@@ -55,8 +70,8 @@ func (g *Group[T]) Do(key string, fn func() (T, error)) (T, error, bool) {
 
 // Forget forgets the in-flight or completed result for key.
 //
-// Future calls to [Group.Do] with the same key will invoke their function again
+// Future calls to [SingleFlightGroup.Do] with the same key will invoke their function again
 // rather than waiting for or receiving a previous result.
-func (g *Group[T]) Forget(key string) {
+func (g *SingleFlightGroup[T]) Forget(key string) {
 	g.group.Forget(key)
 }
