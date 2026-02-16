@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## Unreleased
 
+## [v1.8.0](https://github.com/alexfalkowski/go-sync/releases/tag/v1.8.0) - 2026-02-16
+
+- [`f1df530`](https://github.com/alexfalkowski/go-sync/commit/f1df5305f19bdfc28710df919f4a7f404ee58341) feat(singleflight): add group (#100)
+- [`f1dc6b5`](https://github.com/alexfalkowski/go-sync/commit/f1dc6b5a40f152af5801763eacaba505423ef65a) build(ci): use latest published images (#99)
+- [`b45f6c2`](https://github.com/alexfalkowski/go-sync/commit/b45f6c23dbc4e83a0873eb6782f15c7e6cc9333d) build(ci): use latest published images (#98)
+
 ## [v1.7.0](https://github.com/alexfalkowski/go-sync/releases/tag/v1.7.0) - 2026-02-12
 
 - [`41b12fb`](https://github.com/alexfalkowski/go-sync/commit/41b12fb6aeceeaab6befe8f65e4b1686f00a2035) feat(go): use go v1.26 (#97)
