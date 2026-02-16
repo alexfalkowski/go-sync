@@ -1,6 +1,6 @@
 ![Gopher](assets/gopher.png)
 [![CircleCI](https://circleci.com/gh/alexfalkowski/go-sync.svg?style=shield)](https://circleci.com/gh/alexfalkowski/go-sync)
-[![codecov](https://codecov.io/gh/alexfalkowski/go-sync/graph/badge.svg?token=Q7B3VZYL9K)](https://codecov.io/gh/alexfalkowski/go-sync)
+[![codecov](https://codecov.io/gh/alexfalkowski/go-sync/graph/badge.svg?token=Q7B3VZYL9K)](https://codecov.io/gh/alexfalkowski/go-sync/graph/badge.svg?token=Q7B3VZYL9K)
 [![Go Report Card](https://goreportcard.com/badge/github.com/alexfalkowski/go-sync)](https://goreportcard.com/report/github.com/alexfalkowski/go-sync)
 [![Go Reference](https://pkg.go.dev/badge/github.com/alexfalkowski/go-sync.svg)](https://pkg.go.dev/github.com/alexfalkowski/go-sync)
 [![Stability: Active](https://masterminds.github.io/stability/active.svg)](https://masterminds.github.io/stability/active.html)
@@ -150,6 +150,26 @@ if err != nil {
 }
 
 worker.Wait()
+```
+
+## Group
+
+We have a generic group based on [singleflight.Group](https://pkg.go.dev/golang.org/x/sync/singleflight#Group) to suppress duplicate function calls.
+
+Do returns the value, error, and whether the result was shared with other callers.
+
+```go
+import sync "github.com/alexfalkowski/go-sync"
+
+g := sync.NewGroup[int]()
+
+v, err, shared := g.Do("key", func() (int, error) {
+    // Do something important.
+    return 1, nil
+})
+_, _, _ = v, err, shared
+
+g.Forget("key")
 ```
 
 ## Map
