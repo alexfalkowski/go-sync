@@ -68,7 +68,7 @@ func TestWorkerScheduleError(t *testing.T) {
 	require.WithinDuration(t, time.Now(), startTime, time.Second)
 }
 
-func TestWorkerScheduleCanceledImmediately(t *testing.T) {
+func TestWorkerScheduleNotCanceledImmediately(t *testing.T) {
 	worker := sync.NewWorker(1)
 	c := make(chan error, 1)
 

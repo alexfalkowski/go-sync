@@ -51,6 +51,6 @@
 // Load and Swap return the zero value of T if no value has been stored yet.
 //
 // Map[K,V] is a typed wrapper around sync.Map. Its zero value is ready for use.
-// For methods that type-assert stored values (such as Range and LoadOrStore),
-// storing a nil interface value (when V is an interface type) can cause a panic.
+// For methods that type-assert stored values (such as Range), storing a nil
+// interface value (when V is an interface type) can cause a panic.
 package sync
