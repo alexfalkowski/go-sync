@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## Unreleased
 
+## [v1.14.0](https://github.com/alexfalkowski/go-sync/releases/tag/v1.14.0) - 2026-03-03
+
+- [`839679d`](https://github.com/alexfalkowski/go-sync/commit/839679d993ee2a20027e32868d5ea764480f8c96) feat(docs): examples consistently copy-paste runnable (#118)
+
 ## [v1.13.0](https://github.com/alexfalkowski/go-sync/releases/tag/v1.13.0) - 2026-03-03
 
 - [`ae5f6a3`](https://github.com/alexfalkowski/go-sync/commit/ae5f6a35e6b06c3e04f6a5fe9bfaf2ffd4a8c464) feat(map): made Map.Range nil-interface safe (#116)
