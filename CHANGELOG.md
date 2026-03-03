@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## Unreleased
 
+## [v1.15.0](https://github.com/alexfalkowski/go-sync/releases/tag/v1.15.0) - 2026-03-03
+
+- [`8acfa4a`](https://github.com/alexfalkowski/go-sync/commit/8acfa4afe2e6782a2aeee8456d85777092f34543) feat(sync): deterministic canceled-context behavior in Wait/Timeout/Worker.Schedule (#119)
+
 ## [v1.14.0](https://github.com/alexfalkowski/go-sync/releases/tag/v1.14.0) - 2026-03-03
 
 - [`839679d`](https://github.com/alexfalkowski/go-sync/commit/839679d993ee2a20027e32868d5ea764480f8c96) feat(docs): examples consistently copy-paste runnable (#118)
