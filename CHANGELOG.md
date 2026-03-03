@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## Unreleased
 
+## [v1.12.0](https://github.com/alexfalkowski/go-sync/releases/tag/v1.12.0) - 2026-03-03
+
+- [`60b1745`](https://github.com/alexfalkowski/go-sync/commit/60b174589247914aee681a580f1da386d045c25d) feat(map): fixed Map.LoadOrStore nil-interface safety (#115)
+
 ## [v1.11.0](https://github.com/alexfalkowski/go-sync/releases/tag/v1.11.0) - 2026-03-03
 
 - [`46daaa3`](https://github.com/alexfalkowski/go-sync/commit/46daaa37e5f78649e170b7865698e0e24f545e7d) feat(group): implemented SingleFlightGroup with the fixes (#114)
