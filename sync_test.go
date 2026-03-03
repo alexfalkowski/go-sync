@@ -46,6 +46,21 @@ func TestWaitContextCancel(t *testing.T) {
 	}))
 }
 
+func TestWaitContextAlreadyCanceledDoesNotRun(t *testing.T) {
+	ctx, cancel := context.WithCancel(t.Context())
+	cancel()
+
+	var called sync.Bool
+	require.NoError(t, sync.Wait(ctx, time.Second, sync.Hook{
+		OnRun: func(context.Context) error {
+			called.Store(true)
+			return nil
+		},
+	}))
+	time.Sleep(20 * time.Millisecond)
+	require.False(t, called.Load())
+}
+
 func TestTimeoutNoError(t *testing.T) {
 	require.NoError(t, sync.Timeout(t.Context(), time.Second, sync.Hook{
 		OnRun: func(context.Context) error {
@@ -80,4 +95,21 @@ func TestTimeoutOperationError(t *testing.T) {
 
 	require.Error(t, err)
 	require.True(t, sync.IsTimeoutError(err))
+}
+
+func TestTimeoutContextAlreadyCanceledDoesNotRun(t *testing.T) {
+	ctx, cancel := context.WithCancel(t.Context())
+	cancel()
+
+	var called sync.Bool
+	err := sync.Timeout(ctx, time.Second, sync.Hook{
+		OnRun: func(context.Context) error {
+			called.Store(true)
+			return nil
+		},
+	})
+
+	require.ErrorIs(t, err, context.Canceled)
+	time.Sleep(20 * time.Millisecond)
+	require.False(t, called.Load())
 }

@@ -5,6 +5,9 @@ import "sync/atomic"
 // Int32 is an alias for [atomic.Int32].
 type Int32 = atomic.Int32
 
+// Bool is an alias for [atomic.Bool].
+type Bool = atomic.Bool
+
 // NewValue returns a new [Value] wrapper.
 //
 // The returned value is ready for use.

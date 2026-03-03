@@ -85,6 +85,26 @@ func TestWorkerScheduleNotCanceledImmediately(t *testing.T) {
 	require.NoError(t, <-c)
 }
 
+func TestWorkerScheduleContextAlreadyCanceledDoesNotRun(t *testing.T) {
+	worker := sync.NewWorker(1)
+
+	ctx, cancel := context.WithCancel(t.Context())
+	cancel()
+
+	var called sync.Bool
+	err := worker.Schedule(ctx, time.Second, sync.Hook{
+		OnRun: func(context.Context) error {
+			called.Store(true)
+			return nil
+		},
+	})
+
+	require.ErrorIs(t, err, context.Canceled)
+	worker.Wait()
+	time.Sleep(20 * time.Millisecond)
+	require.False(t, called.Load())
+}
+
 func TestWorkerScheduleTimeoutIncludesQueueWait(t *testing.T) {
 	worker := sync.NewWorker(1)
 	started := make(chan struct{})

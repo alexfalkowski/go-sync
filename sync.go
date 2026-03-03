@@ -70,10 +70,16 @@ func IsTimeoutError(err error) bool {
 // waiting for OnRun to finish. The OnRun goroutine may continue running in the
 // background, and any error it eventually produces will be discarded.
 //
+// If ctx is already done on entry (or timeout <= 0), Wait returns nil without
+// invoking OnRun.
+//
 // If hook.OnRun is nil, Wait returns [ErrNoOnRunProvided].
 func Wait(ctx context.Context, timeout time.Duration, hook Hook) error {
 	if hook.OnRun == nil {
 		return ErrNoOnRunProvided
+	}
+	if ctx.Err() != nil || timeout <= 0 {
+		return nil
 	}
 
 	timer := time.NewTimer(timeout)
@@ -87,6 +93,14 @@ func Wait(ctx context.Context, timeout time.Duration, hook Hook) error {
 
 	select {
 	case err := <-ch:
+		select {
+		case <-timer.C:
+			return nil
+		default:
+		}
+		if ctx.Err() != nil {
+			return nil
+		}
 		return err
 	case <-timer.C:
 		return nil
@@ -108,14 +122,23 @@ func Wait(ctx context.Context, timeout time.Duration, hook Hook) error {
 // If OnRun completes before the derived context is done, Timeout returns
 // hook.Error(ctx, hook.OnRun(ctx)) where ctx is the derived context.
 //
+// If the input ctx is already done on entry, or timeout <= 0, Timeout returns
+// the derived context error without invoking OnRun.
+//
 // If hook.OnRun is nil, Timeout returns [ErrNoOnRunProvided].
 func Timeout(ctx context.Context, timeout time.Duration, hook Hook) error {
 	if hook.OnRun == nil {
 		return ErrNoOnRunProvided
 	}
+	if ctx.Err() != nil {
+		return ctx.Err()
+	}
 
 	ctx, cancel := context.WithTimeout(ctx, timeout)
 	defer cancel()
+	if ctx.Err() != nil {
+		return ctx.Err()
+	}
 
 	ch := make(chan error, 1)
 	go func() {
@@ -125,6 +148,9 @@ func Timeout(ctx context.Context, timeout time.Duration, hook Hook) error {
 
 	select {
 	case err := <-ch:
+		if ctx.Err() != nil {
+			return ctx.Err()
+		}
 		return err
 	case <-ctx.Done():
 		return ctx.Err()
