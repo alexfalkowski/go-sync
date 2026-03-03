@@ -53,15 +53,18 @@ func (w *Worker) Schedule(ctx context.Context, timeout time.Duration, hook Hook)
 	}
 
 	ctx, cancel := context.WithTimeout(ctx, timeout)
-	defer cancel()
-
 	select {
 	case w.requests <- struct{}{}:
 		w.wg.Go(func() {
+			defer cancel()
+			defer func() {
+				<-w.requests
+			}()
+
 			_ = hook.Error(ctx, hook.OnRun(ctx))
-			<-w.requests
 		})
 	case <-ctx.Done():
+		cancel()
 		return ctx.Err()
 	}
 
