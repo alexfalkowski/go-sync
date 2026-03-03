@@ -111,11 +111,17 @@ func (m *Map[K, V]) Swap(key K, value V) (V, bool) {
 }
 
 // CompareAndSwap executes the compare-and-swap operation.
+//
+// It follows [sync.Map.CompareAndSwap] semantics. If old's dynamic type is not
+// comparable, CompareAndSwap panics.
 func (m *Map[K, V]) CompareAndSwap(key K, old, new V) bool {
 	return m.m.CompareAndSwap(key, old, new)
 }
 
 // CompareAndDelete executes the compare-and-delete operation.
+//
+// It follows [sync.Map.CompareAndDelete] semantics. If old's dynamic type is
+// not comparable, CompareAndDelete panics.
 func (m *Map[K, V]) CompareAndDelete(key K, old V) bool {
 	return m.m.CompareAndDelete(key, old)
 }
