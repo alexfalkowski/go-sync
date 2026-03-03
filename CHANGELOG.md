@@ -6,6 +6,20 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## Unreleased
 
+## [v1.10.0](https://github.com/alexfalkowski/go-sync/releases/tag/v1.10.0) - 2026-03-03
+
+- [`0e3e33f`](https://github.com/alexfalkowski/go-sync/commit/0e3e33ffef41535fbab0d06e0aba0251a463da8b) feat(worker): implemented Worker.Schedule to preserve handler context lifetime correctly (#112)
+- [`a9229c0`](https://github.com/alexfalkowski/go-sync/commit/a9229c0c1372e4f5b46e526d38e4046f48303645) build(ci): use latest published images (#111)
+- [`2b0d789`](https://github.com/alexfalkowski/go-sync/commit/2b0d789c7cc73b281243cca5d4c85a8ba4e4fc9f) build(ci): use latest published images (#110)
+- [`a8dc681`](https://github.com/alexfalkowski/go-sync/commit/a8dc68158bd5f8bd09d58f87958605f912ef36e0) build(ci): use latest published images (#109)
+- [`79760b0`](https://github.com/alexfalkowski/go-sync/commit/79760b0dbc992b6a9842f8ca63b68887763574ce) build(ci): use latest published images (#108)
+- [`9c3b23b`](https://github.com/alexfalkowski/go-sync/commit/9c3b23b9776d542731b8db20dcf4dc1272f9efd3) build(ci): use latest published images (#107)
+- [`3b17983`](https://github.com/alexfalkowski/go-sync/commit/3b179839eb2a383806f1d6f4e443b32e144dc90e) build(deps): upgraded github.com/alexfalkowski/bin (#106)
+- [`c930299`](https://github.com/alexfalkowski/go-sync/commit/c930299031101d88ee730a48a91daad3a0a87d5a) build(deps): upgraded github.com/alexfalkowski/bin (#105)
+- [`9745296`](https://github.com/alexfalkowski/go-sync/commit/9745296a369e092d4488b9fa90cf3079a71340bc) build(ci): use latest published images (#104)
+- [`f3715ad`](https://github.com/alexfalkowski/go-sync/commit/f3715ad756ff122881efccd6de259d55ded620ed) build(ci): use latest published images (#103)
+- [`5093043`](https://github.com/alexfalkowski/go-sync/commit/5093043604ab2b4d1858cdc9372830f4c2d1fa2a) build(ci): use latest published images (#102)
+
 ## [v1.9.0](https://github.com/alexfalkowski/go-sync/releases/tag/v1.9.0) - 2026-02-16
 
 - [`6307396`](https://github.com/alexfalkowski/go-sync/commit/63073964016889050a454c7a865bf841c654fb97) feat(group): add ErrorGroup (#101)
