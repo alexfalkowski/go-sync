@@ -85,6 +85,36 @@ func TestWorkerScheduleNotCanceledImmediately(t *testing.T) {
 	require.NoError(t, <-c)
 }
 
+func TestWorkerScheduleTimeoutIncludesQueueWait(t *testing.T) {
+	worker := sync.NewWorker(1)
+	started := make(chan struct{})
+	c := make(chan error, 1)
+
+	err := worker.Schedule(t.Context(), time.Second, sync.Hook{
+		OnRun: func(context.Context) error {
+			close(started)
+			time.Sleep(150 * time.Millisecond)
+			return nil
+		},
+	})
+	require.NoError(t, err)
+	<-started
+
+	begin := time.Now()
+	err = worker.Schedule(t.Context(), 250*time.Millisecond, sync.Hook{
+		OnRun: func(ctx context.Context) error {
+			<-ctx.Done()
+			c <- ctx.Err()
+			return nil
+		},
+	})
+	require.NoError(t, err)
+
+	worker.Wait()
+	require.ErrorIs(t, <-c, context.DeadlineExceeded)
+	require.Less(t, time.Since(begin), 325*time.Millisecond)
+}
+
 func BenchmarkWorker(b *testing.B) {
 	worker := sync.NewWorker(uint(b.N)) //nolint:gosec
 	for b.Loop() {

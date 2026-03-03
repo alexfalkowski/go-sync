@@ -90,6 +90,7 @@ if sync.IsTimeoutError(err) {
 
 - `NewWorker(count)` creates a worker with at most `count` in-flight handlers.
 - `Schedule` blocks until a slot is acquired or timeout/cancel happens.
+- The `timeout` budget starts when `Schedule` is called, so queue wait time and handler run time share the same deadline.
 - `Schedule` returns only scheduling errors (`ctx.Err()` or `ErrNoOnRunProvided`).
 - Handler errors are routed to `Hook.OnError` and are not returned by `Schedule`.
 - `Wait` blocks until all successfully scheduled handlers complete.
@@ -219,7 +220,7 @@ _, _ = prev, ok
 
 - Zero value is ready (`NewMap` is optional).
 - `Load`, `LoadOrStore`, `LoadAndDelete`, and `Swap` return zero `V` when needed; use boolean flags to distinguish missing keys.
-- If `V` is an interface type, storing a nil interface value can still panic in methods that type-assert stored values like `Range`.
+- If `V` is an interface type and a nil interface value is stored, value-returning methods expose it as zero `V` (for example, `nil` for interface `V`).
 
 ```go
 m := sync.NewMap[string, int]()
@@ -246,8 +247,7 @@ var r io.Reader // nil interface value
 v, loaded := m.LoadOrStore("reader", r)
 _, _ = v, loaded // safe for LoadOrStore
 
-// Avoid calling Range if you may have stored nil interface values;
-// Range type-asserts values and may panic on untyped nil.
+// Range receives the zero value of V for this entry (nil for io.Reader).
 ```
 
 ## Background / References
