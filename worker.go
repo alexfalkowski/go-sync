@@ -45,6 +45,8 @@ type Worker struct {
 // Error handling semantics:
 //
 //   - If hook.OnRun is nil, Schedule returns [ErrNoOnRunProvided].
+//   - If the input context is already done on entry, Schedule returns ctx.Err()
+//     without scheduling OnRun.
 //   - Errors returned from OnRun are routed to hook.OnError (if set) and are not returned from Schedule.
 //     Schedule only reports errors related to scheduling (timeout/cancellation before a slot is acquired).
 //
@@ -53,10 +55,24 @@ func (w *Worker) Schedule(ctx context.Context, timeout time.Duration, hook Hook)
 	if hook.OnRun == nil {
 		return ErrNoOnRunProvided
 	}
+	if ctx.Err() != nil {
+		return ctx.Err()
+	}
 
 	ctx, cancel := context.WithTimeout(ctx, timeout)
+	if ctx.Err() != nil {
+		cancel()
+		return ctx.Err()
+	}
+
 	select {
 	case w.requests <- struct{}{}:
+		if ctx.Err() != nil {
+			<-w.requests
+			cancel()
+			return ctx.Err()
+		}
+
 		w.wg.Go(func() {
 			defer cancel()
 			defer func() {

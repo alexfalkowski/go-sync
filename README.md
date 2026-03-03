@@ -60,6 +60,7 @@ func main() {
 
 - `Wait`: best-effort wait up to `timeout`; returns `nil` on timeout/cancel and does not cancel `OnRun`.
 - `Timeout`: derives a timeout context for `OnRun`; returns `ctx.Err()` (`context.DeadlineExceeded` or `context.Canceled`) when the context ends first.
+- If the input context is already done, `Wait` returns `nil` immediately and `Timeout` returns `ctx.Err()` immediately (neither invokes `OnRun`).
 
 Use `sync.IsTimeoutError(err)` to check if an error is `context.DeadlineExceeded`.
 
@@ -125,6 +126,7 @@ func main() {
 - `Schedule` returns only scheduling errors (`ctx.Err()` or `ErrNoOnRunProvided`).
 - Handler errors are routed to `Hook.OnError` and are not returned by `Schedule`.
 - `Wait` blocks until all successfully scheduled handlers complete.
+- If the input context is already canceled, `Schedule` returns `ctx.Err()` immediately and does not schedule `OnRun`.
 
 If `count == 0`, scheduling always blocks until timeout/cancel.
 
