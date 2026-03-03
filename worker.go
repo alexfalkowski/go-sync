@@ -38,6 +38,8 @@ type Worker struct {
 //  2. The derived timeout context is done first: Schedule returns ctx.Err().
 //
 // The context passed to OnRun is a derived context created by [context.WithTimeout] using the provided timeout.
+// The timeout budget starts when Schedule is called, so time spent waiting for a
+// concurrency slot and time spent running OnRun share the same deadline.
 // This context is also passed to hook.OnError (via hook.Error) if OnRun returns a non-nil error.
 //
 // Error handling semantics:

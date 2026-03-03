@@ -23,16 +23,17 @@ func NewMap[K comparable, V any]() Map[K, V] {
 // value of V when a key is not present. Use the returned boolean to distinguish
 // “not present” from a stored zero value.
 //
-// # Nil interface pitfalls and panics
+// # Nil interface values
 //
 // Internally, sync.Map stores values as `any`. This wrapper type-asserts stored
 // values back to V for some operations. If V is an interface type, storing a nil
 // interface value (for example, `var r io.Reader = nil`) results in an untyped nil
-// being stored, which will cause methods that type-assert (such as [Map.Range]) to
-// panic.
+// being stored.
 //
-// To avoid this, do not store nil interface values. Store a non-nil concrete value,
-// or redesign V to be a pointer/struct that can represent “no value” explicitly.
+// Methods that return values from the map (such as [Map.Load], [Map.LoadOrStore],
+// [Map.LoadAndDelete], [Map.Swap], and [Map.Range]) treat this as the zero value of V.
+// Use the returned booleans where available to distinguish stored zero values from
+// absent keys.
 type Map[K comparable, V any] struct {
 	zero V
 	m    sync.Map
@@ -53,8 +54,8 @@ func (m *Map[K, V]) Load(key K) (V, bool) {
 
 // Store sets the value for key.
 //
-// Warning: if V is an interface type, storing a nil interface value can cause
-// other methods that type-assert stored values (for example, [Map.Range]) to panic.
+// If V is an interface type and value is nil, the map stores an untyped nil.
+// Load-like methods and Range expose this as the zero value of V.
 func (m *Map[K, V]) Store(key K, value V) {
 	m.m.Store(key, value)
 }
@@ -123,8 +124,13 @@ func (m *Map[K, V]) CompareAndDelete(key K, old V) bool {
 //
 // If f returns false, Range stops the iteration.
 //
-// This method panics if a stored value is nil (for example, when V is an interface
-// type and a nil value was stored), because it type-asserts values to V.
+// If a stored value is nil (for example, when V is an interface type and a nil
+// value was stored), Range passes the zero value of V to f.
 func (m *Map[K, V]) Range(f func(key K, value V) bool) {
-	m.m.Range(func(k, v any) bool { return f(k.(K), v.(V)) })
+	m.m.Range(func(k, v any) bool {
+		if v != nil {
+			return f(k.(K), v.(V))
+		}
+		return f(k.(K), m.zero)
+	})
 }

@@ -108,3 +108,22 @@ func TestMapLoadOrStoreNilInterfaceValue(t *testing.T) {
 	require.Nil(t, v)
 	require.True(t, loaded)
 }
+
+func TestMapRangeNilInterfaceValue(t *testing.T) {
+	m := sync.NewMap[string, io.Reader]()
+	defer m.Clear()
+
+	var r io.Reader
+	m.Store("reader", r)
+
+	called := false
+	require.NotPanics(t, func() {
+		m.Range(func(key string, value io.Reader) bool {
+			called = true
+			require.Equal(t, "reader", key)
+			require.Nil(t, value)
+			return true
+		})
+	})
+	require.True(t, called)
+}

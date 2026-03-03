@@ -1,9 +1,17 @@
 package sync
 
 import (
+	"sync"
+
 	"golang.org/x/sync/errgroup"
 	"golang.org/x/sync/singleflight"
 )
+
+// WaitGroup is an alias for [sync.WaitGroup].
+//
+// It is provided for convenience so users of this package can refer to a
+// WaitGroup without importing `sync` directly.
+type WaitGroup = sync.WaitGroup
 
 // ErrorGroup is an alias for [errgroup.Group].
 //
