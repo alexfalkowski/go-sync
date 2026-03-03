@@ -17,4 +17,14 @@ func TestValue(t *testing.T) {
 	require.Equal(t, 1, value.Load())
 	require.Equal(t, 1, value.Swap(2))
 	require.True(t, value.CompareAndSwap(2, 3))
+	require.False(t, value.CompareAndSwap(2, 4))
+}
+
+func TestValueCompareAndSwapPanicsWithNonComparableValues(t *testing.T) {
+	value := sync.NewValue[any]()
+	value.Store([]int{1})
+
+	require.Panics(t, func() {
+		value.CompareAndSwap([]int{1}, []int{2})
+	})
 }

@@ -19,12 +19,6 @@ A small Go library (package `sync`) with focused concurrency helpers:
 go get github.com/alexfalkowski/go-sync
 ```
 
-## Import
-
-```go
-import sync "github.com/alexfalkowski/go-sync"
-```
-
 ## Hooks
 
 Most execution helpers accept a `sync.Hook`:
@@ -36,13 +30,27 @@ Most execution helpers accept a `sync.Hook`:
 `OnError` is only called when `OnRun` returns a non-nil error. If `OnError` returns a different error, that new error is returned.
 
 ```go
-hook := sync.Hook{
-	OnRun: func(context.Context) error {
-		return errors.New("boom")
-	},
-	OnError: func(_ context.Context, err error) error {
-		return fmt.Errorf("wrapped: %w", err)
-	},
+package main
+
+import (
+	"context"
+	"errors"
+	"fmt"
+
+	sync "github.com/alexfalkowski/go-sync"
+)
+
+func main() {
+	hook := sync.Hook{
+		OnRun: func(context.Context) error {
+			return errors.New("boom")
+		},
+		OnError: func(_ context.Context, err error) error {
+			return fmt.Errorf("wrapped: %w", err)
+		},
+	}
+
+	_ = hook
 }
 ```
 
@@ -58,29 +66,52 @@ Use `sync.IsTimeoutError(err)` to check if an error is `context.DeadlineExceeded
 ### Wait example (best effort)
 
 ```go
-err := sync.Wait(context.Background(), 10*time.Millisecond, sync.Hook{
-	OnRun: func(context.Context) error {
-		time.Sleep(time.Second)
-		return errors.New("finished too late")
-	},
-})
+package main
 
-// err is nil because Wait timed out first.
-_ = err
+import (
+	"context"
+	"errors"
+	"fmt"
+	"time"
+
+	sync "github.com/alexfalkowski/go-sync"
+)
+
+func main() {
+	err := sync.Wait(context.Background(), 10*time.Millisecond, sync.Hook{
+		OnRun: func(context.Context) error {
+			time.Sleep(time.Second)
+			return errors.New("finished too late")
+		},
+	})
+
+	// true: Wait timed out first.
+	fmt.Println(err == nil)
+}
 ```
 
 ### Timeout example (propagated cancellation)
 
 ```go
-err := sync.Timeout(context.Background(), 10*time.Millisecond, sync.Hook{
-	OnRun: func(ctx context.Context) error {
-		<-ctx.Done()
-		return ctx.Err()
-	},
-})
+package main
 
-if sync.IsTimeoutError(err) {
-	// Timed out via context.DeadlineExceeded.
+import (
+	"context"
+	"fmt"
+	"time"
+
+	sync "github.com/alexfalkowski/go-sync"
+)
+
+func main() {
+	err := sync.Timeout(context.Background(), 10*time.Millisecond, sync.Hook{
+		OnRun: func(ctx context.Context) error {
+			<-ctx.Done()
+			return ctx.Err()
+		},
+	})
+
+	fmt.Println(sync.IsTimeoutError(err))
 }
 ```
 
@@ -98,22 +129,36 @@ if sync.IsTimeoutError(err) {
 If `count == 0`, scheduling always blocks until timeout/cancel.
 
 ```go
-worker := sync.NewWorker(4)
-defer worker.Wait()
+package main
 
-for i := range 10 {
-	err := worker.Schedule(context.Background(), time.Second, sync.Hook{
-		OnRun: func(context.Context) error {
-			fmt.Println("job", i)
-			return nil
-		},
-		OnError: func(_ context.Context, err error) error {
-			log.Printf("job failed: %v", err)
-			return err
-		},
-	})
-	if err != nil {
-		log.Printf("schedule failed: %v", err)
+import (
+	"context"
+	"fmt"
+	"log"
+	"time"
+
+	sync "github.com/alexfalkowski/go-sync"
+)
+
+func main() {
+	worker := sync.NewWorker(4)
+	defer worker.Wait()
+
+	for i := 0; i < 3; i++ {
+		job := i
+		err := worker.Schedule(context.Background(), time.Second, sync.Hook{
+			OnRun: func(context.Context) error {
+				fmt.Println("job", job)
+				return nil
+			},
+			OnError: func(_ context.Context, err error) error {
+				log.Printf("job failed: %v", err)
+				return err
+			},
+		})
+		if err != nil {
+			log.Printf("schedule failed: %v", err)
+		}
 	}
 }
 ```
@@ -125,13 +170,22 @@ for i := range 10 {
 `sync.ErrorGroup` is a type alias for [`errgroup.Group`](https://pkg.go.dev/golang.org/x/sync/errgroup#Group).
 
 ```go
-var g sync.ErrorGroup
+package main
 
-g.Go(func() error { return nil })
-g.Go(func() error { return fmt.Errorf("boom") })
+import (
+	"errors"
+	"fmt"
 
-if err := g.Wait(); err != nil {
-	// first non-nil error
+	sync "github.com/alexfalkowski/go-sync"
+)
+
+func main() {
+	var g sync.ErrorGroup
+
+	g.Go(func() error { return nil })
+	g.Go(func() error { return errors.New("boom") })
+
+	fmt.Println(g.Wait() != nil)
 }
 ```
 
@@ -145,14 +199,24 @@ if err := g.Wait(); err != nil {
 - On `fn` error, `Do` returns zero `T` plus the error.
 
 ```go
-var g sync.SingleFlightGroup[int] // zero value is usable
+package main
 
-v, err, shared := g.Do("key", func() (int, error) {
-	return 42, nil
-})
-_, _, _ = v, err, shared
+import (
+	"fmt"
 
-g.Forget("key") // next Do("key", ...) executes fn again
+	sync "github.com/alexfalkowski/go-sync"
+)
+
+func main() {
+	var g sync.SingleFlightGroup[int]
+
+	v, err, shared := g.Do("key", func() (int, error) {
+		return 42, nil
+	})
+	fmt.Println(v, err == nil, shared)
+
+	g.Forget("key")
+}
 ```
 
 ## Pool
@@ -166,14 +230,26 @@ g.Forget("key") // next Do("key", ...) executes fn again
 - Follows normal `sync.Pool` semantics (runtime may drop entries anytime).
 
 ```go
-type item struct {
-	ID int
-}
+package main
 
-pool := sync.NewPool[item]()
-it := pool.Get()
-it.ID = 10
-pool.Put(it)
+import (
+	"fmt"
+
+	sync "github.com/alexfalkowski/go-sync"
+)
+
+func main() {
+	type item struct {
+		ID int
+	}
+
+	pool := sync.NewPool[item]()
+	it := pool.Get()
+	it.ID = 10
+	pool.Put(it)
+
+	fmt.Println("ok")
+}
 ```
 
 ### BufferPool
@@ -185,13 +261,23 @@ pool.Put(it)
 - `Copy` returns a cloned `[]byte` (non-aliasing, nil-safe).
 
 ```go
-bp := sync.NewBufferPool()
-buf := bp.Get()
-defer bp.Put(buf)
+package main
 
-buf.WriteString("hello")
-out := bp.Copy(buf) // []byte("hello"), safe copy
-_ = out
+import (
+	"fmt"
+
+	sync "github.com/alexfalkowski/go-sync"
+)
+
+func main() {
+	bp := sync.NewBufferPool()
+	buf := bp.Get()
+	defer bp.Put(buf)
+
+	buf.WriteString("hello")
+	out := bp.Copy(buf)
+	fmt.Println(string(out))
+}
 ```
 
 ## Value
@@ -201,17 +287,25 @@ _ = out
 - Zero value is ready.
 - `Load` and `Swap` return zero `T` if unset.
 - Same underlying constraints as `atomic.Value` apply.
+- `CompareAndSwap` follows `atomic.Value.CompareAndSwap`; when `T` is an interface, non-comparable dynamic values in `old` can panic.
 
 ```go
-var v sync.Value[int] // zero value is usable
+package main
 
-current := v.Load() // 0
-_ = current
+import (
+	"fmt"
 
-v.Store(1)
-prev := v.Swap(2) // 1
-ok := v.CompareAndSwap(2, 3)
-_, _ = prev, ok
+	sync "github.com/alexfalkowski/go-sync"
+)
+
+func main() {
+	var v sync.Value[int]
+	fmt.Println(v.Load())
+
+	v.Store(1)
+	fmt.Println(v.Swap(2))
+	fmt.Println(v.CompareAndSwap(2, 3))
+}
 ```
 
 ## Map
@@ -221,33 +315,56 @@ _, _ = prev, ok
 - Zero value is ready (`NewMap` is optional).
 - `Load`, `LoadOrStore`, `LoadAndDelete`, and `Swap` return zero `V` when needed; use boolean flags to distinguish missing keys.
 - If `V` is an interface type and a nil interface value is stored, value-returning methods expose it as zero `V` (for example, `nil` for interface `V`).
+- `CompareAndSwap` / `CompareAndDelete` follow `sync.Map` comparability rules; non-comparable dynamic `old` values can panic.
 
 ```go
-m := sync.NewMap[string, int]()
+package main
 
-m.Store("one", 1)
-v, ok := m.Load("one")
-_, _ = v, ok
+import (
+	"fmt"
 
-prev, loaded := m.LoadOrStore("one", 99) // prev=1, loaded=true
-_, _ = prev, loaded
+	sync "github.com/alexfalkowski/go-sync"
+)
 
-m.Range(func(k string, v int) bool {
-	fmt.Println(k, v)
-	return true
-})
+func main() {
+	m := sync.NewMap[string, int]()
+
+	m.Store("one", 1)
+	v, ok := m.Load("one")
+	fmt.Println(v, ok)
+
+	prev, loaded := m.LoadOrStore("one", 99)
+	fmt.Println(prev, loaded)
+
+	m.Range(func(k string, v int) bool {
+		fmt.Println(k, v)
+		return true
+	})
+}
 ```
 
 Nil interface edge-case example:
 
 ```go
-m := sync.NewMap[string, io.Reader]()
+package main
 
-var r io.Reader // nil interface value
-v, loaded := m.LoadOrStore("reader", r)
-_, _ = v, loaded // safe for LoadOrStore
+import (
+	"fmt"
+	"io"
 
-// Range receives the zero value of V for this entry (nil for io.Reader).
+	sync "github.com/alexfalkowski/go-sync"
+)
+
+func main() {
+	var m sync.Map[string, io.Reader]
+	var r io.Reader
+
+	m.Store("reader", r)
+	m.Range(func(_ string, value io.Reader) bool {
+		fmt.Println(value == nil)
+		return true
+	})
+}
 ```
 
 ## Background / References
@@ -259,3 +376,5 @@ This library draws inspiration from:
 - <https://gobyexample.com/timeouts>
 - <https://go.dev/wiki/Timeouts>
 - <https://github.com/lotusirous/go-concurrency-patterns>
+
+For executable, CI-verified usage examples, see [`example_test.go`](example_test.go).

@@ -67,6 +67,9 @@ func (v *Value[T]) Swap(n T) T {
 }
 
 // CompareAndSwap executes the atomic compare-and-swap operation.
+//
+// It follows [atomic.Value.CompareAndSwap] semantics. If o's dynamic type is
+// not comparable, CompareAndSwap panics.
 func (v *Value[T]) CompareAndSwap(o, n T) bool {
 	return v.v.CompareAndSwap(o, n)
 }

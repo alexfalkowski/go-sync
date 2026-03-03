@@ -80,6 +80,33 @@ func TestMapCompare(t *testing.T) {
 
 	require.False(t, m.CompareAndSwap("test", "test", "test"))
 	require.False(t, m.CompareAndDelete("test", "test"))
+
+	m.Store("test", "test")
+	require.True(t, m.CompareAndSwap("test", "test", "updated"))
+
+	v, ok := m.Load("test")
+	require.True(t, ok)
+	require.Equal(t, "updated", v)
+
+	require.True(t, m.CompareAndDelete("test", "updated"))
+
+	_, ok = m.Load("test")
+	require.False(t, ok)
+}
+
+func TestMapComparePanicsWithNonComparableValues(t *testing.T) {
+	m := sync.NewMap[string, any]()
+	defer m.Clear()
+
+	m.Store("test", []int{1})
+
+	require.Panics(t, func() {
+		m.CompareAndSwap("test", []int{1}, []int{2})
+	})
+
+	require.Panics(t, func() {
+		m.CompareAndDelete("test", []int{1})
+	})
 }
 
 func TestMapRange(t *testing.T) {
