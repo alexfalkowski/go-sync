@@ -7,235 +7,255 @@
 
 # go-sync
 
-A small Go library (package `sync`) that provides concurrency helpers.
+A small Go library (package `sync`) with focused concurrency helpers:
 
-## Background
+- Hook-driven execution (`Wait`, `Timeout`, `Worker`)
+- Typed wrappers for `sync.Pool`, `sync.Map`, and `atomic.Value`
+- Group helpers (`ErrorGroup`, `SingleFlightGroup`)
 
-These are some examples that this library was inspired by:
+## Install
 
-- <https://go.dev/blog/pipelines>
-- <https://go.dev/talks/2012/concurrency.slide>
-- <https://gobyexample.com/timeouts>
-- <https://go.dev/wiki/Timeouts>
-- <https://github.com/lotusirous/go-concurrency-patterns>
-
-## Wait
-
-Wait runs `Hook.OnRun` asynchronously and waits up to the provided timeout for it to complete.
-
-If `OnRun` completes first, `Wait` returns the result of `Hook.OnError` (if provided) applied to the error returned by `OnRun`.
-
-If the timeout expires (or the context is canceled) first, `Wait` returns `nil` immediately **without waiting for `OnRun` to finish**. This means `OnRun` may continue running in the background, and any error it eventually produces is discarded.
-
-Use `Wait` when you want a best-effort “wait up to N” behavior and you do not need cancellation to be propagated into the work. If you need cancellation and a timeout error, use `Timeout`.
-
-As an example:
-
-```go
-import (
-    "context"
-    "time"
-
-    sync "github.com/alexfalkowski/go-sync"
-)
-
-err := sync.Wait(context.Background(), time.Second, sync.Hook{
-    OnRun: func(context.Context) error {
-        // Do something important.
-        return nil
-    },
-    OnError: func(_ context.Context, err error) error {
-        // Do something with err.
-        return err
-    },
-})
-if err != nil {
-    // Do something with err.
-}
+```bash
+go get github.com/alexfalkowski/go-sync
 ```
 
-## Timeout
-
-Timeout runs `Hook.OnRun` with a derived context created by `context.WithTimeout`.
-
-If `OnRun` completes first, `Timeout` returns the result of `Hook.OnError` (if provided) applied to the error returned by `OnRun`.
-
-If the timeout expires (or the context is canceled) first, `Timeout` returns `ctx.Err()` (typically `context.DeadlineExceeded` or `context.Canceled`). Unlike `Wait`, cancellation is propagated to `OnRun` via the derived context, so well-behaved handlers should observe `ctx.Done()` and exit promptly.
-
-As an example:
-
-```go
-import (
-    "context"
-    "time"
-
-    sync "github.com/alexfalkowski/go-sync"
-)
-
-err := sync.Timeout(context.Background(), time.Second, sync.Hook{
-    OnRun: func(context.Context) error {
-        // Do something important.
-        return nil
-    },
-    OnError: func(_ context.Context, err error) error {
-        // Do something with err.
-        return err
-    },
-})
-if err != nil {
-    if sync.IsTimeoutError(err) {
-        // Do something with timeout.
-    }
-
-    // Do something with error.
-}
-```
-
-## Pool
-
-We have a generic pool based on [sync.Pool](https://pkg.go.dev/sync#Pool) and a [bytes.Buffer](https://pkg.go.dev/bytes#Buffer) pool.
+## Import
 
 ```go
 import sync "github.com/alexfalkowski/go-sync"
-
-pool := sync.NewBufferPool()
-
-buffer := pool.Get() // Do something with buffer.
-defer pool.Put(buffer)
-
-// Do something with buffer, then copy it to a []byte.
-bs := pool.Copy(buffer)
-_ = bs
 ```
 
-## Atomic
+## Hooks
 
-We have a generic value based on [atomic.Value](https://pkg.go.dev/sync/atomic#Value).
+Most execution helpers accept a `sync.Hook`:
+
+- `OnRun(context.Context) error` is required.
+- `OnError(context.Context, error) error` is optional.
+- If `OnRun` is nil, helpers return `sync.ErrNoOnRunProvided`.
+
+`OnError` is only called when `OnRun` returns a non-nil error. If `OnError` returns a different error, that new error is returned.
 
 ```go
-import sync "github.com/alexfalkowski/go-sync"
+hook := sync.Hook{
+	OnRun: func(context.Context) error {
+		return errors.New("boom")
+	},
+	OnError: func(_ context.Context, err error) error {
+		return fmt.Errorf("wrapped: %w", err)
+	},
+}
+```
 
-value := sync.NewValue[int]()
+## Wait vs Timeout
 
-value.Store(1)
-v := value.Load() // Do something with v.
+`Wait` and `Timeout` both run `Hook.OnRun`, but they differ:
+
+- `Wait`: best-effort wait up to `timeout`; returns `nil` on timeout/cancel and does not cancel `OnRun`.
+- `Timeout`: derives a timeout context for `OnRun`; returns `ctx.Err()` (`context.DeadlineExceeded` or `context.Canceled`) when the context ends first.
+
+Use `sync.IsTimeoutError(err)` to check if an error is `context.DeadlineExceeded`.
+
+### Wait example (best effort)
+
+```go
+err := sync.Wait(context.Background(), 10*time.Millisecond, sync.Hook{
+	OnRun: func(context.Context) error {
+		time.Sleep(time.Second)
+		return errors.New("finished too late")
+	},
+})
+
+// err is nil because Wait timed out first.
+_ = err
+```
+
+### Timeout example (propagated cancellation)
+
+```go
+err := sync.Timeout(context.Background(), 10*time.Millisecond, sync.Hook{
+	OnRun: func(ctx context.Context) error {
+		<-ctx.Done()
+		return ctx.Err()
+	},
+})
+
+if sync.IsTimeoutError(err) {
+	// Timed out via context.DeadlineExceeded.
+}
 ```
 
 ## Worker
 
-We have a worker based on [sync.WaitGroup](https://pkg.go.dev/sync#WaitGroup) and [buffered channels](https://go.dev/tour/concurrency/3) to bound concurrent execution.
+`Worker` schedules asynchronous handlers with bounded concurrency.
 
-Schedule returns ctx.Err() if it cannot schedule the handler before the timeout expires or the context is canceled, and returns ErrNoOnRunProvided if OnRun is nil. Handler errors are passed to Hook.OnError (if set) and are not returned.
+- `NewWorker(count)` creates a worker with at most `count` in-flight handlers.
+- `Schedule` blocks until a slot is acquired or timeout/cancel happens.
+- `Schedule` returns only scheduling errors (`ctx.Err()` or `ErrNoOnRunProvided`).
+- Handler errors are routed to `Hook.OnError` and are not returned by `Schedule`.
+- `Wait` blocks until all successfully scheduled handlers complete.
+
+If `count == 0`, scheduling always blocks until timeout/cancel.
 
 ```go
-import (
-    "context"
-    "time"
+worker := sync.NewWorker(4)
+defer worker.Wait()
 
-    sync "github.com/alexfalkowski/go-sync"
-)
-
-worker := sync.NewWorker(10)
-
-err := worker.Schedule(context.Background(), time.Second, sync.Hook{
-    OnRun: func(context.Context) error {
-        // Do something important.
-        return nil
-    },
-    OnError: func(_ context.Context, err error) error {
-        // Do something with err.
-        return nil
-    },
-})
-if err != nil {
-    if sync.IsTimeoutError(err) {
-        // Do something with timeout.
-    }
-
-    // Do something with scheduling error.
+for i := range 10 {
+	err := worker.Schedule(context.Background(), time.Second, sync.Hook{
+		OnRun: func(context.Context) error {
+			fmt.Println("job", i)
+			return nil
+		},
+		OnError: func(_ context.Context, err error) error {
+			log.Printf("job failed: %v", err)
+			return err
+		},
+	})
+	if err != nil {
+		log.Printf("schedule failed: %v", err)
+	}
 }
-
-worker.Wait()
 ```
 
 ## Group
 
 ### ErrorGroup
 
-`ErrorGroup` is a convenience alias for [`errgroup.Group`](https://pkg.go.dev/golang.org/x/sync/errgroup#Group). It behaves exactly like `errgroup.Group`.
+`sync.ErrorGroup` is a type alias for [`errgroup.Group`](https://pkg.go.dev/golang.org/x/sync/errgroup#Group).
 
 ```go
-import (
-    "context"
-    "fmt"
-
-    sync "github.com/alexfalkowski/go-sync"
-)
-
 var g sync.ErrorGroup
 
-g.Go(func() error {
-    // Do something important.
-    return nil
-})
+g.Go(func() error { return nil })
+g.Go(func() error { return fmt.Errorf("boom") })
 
-g.Go(func() error {
-    return fmt.Errorf("boom")
-})
-
-// Wait returns the first non-nil error (if any), once all goroutines complete.
 if err := g.Wait(); err != nil {
-    _ = context.Cause(context.Background()) // no-op example usage; remove in real code
-    // Do something with err.
+	// first non-nil error
 }
 ```
 
 ### SingleFlightGroup
 
-We have a generic group based on [singleflight.Group](https://pkg.go.dev/golang.org/x/sync/singleflight#Group) to suppress duplicate function calls.
+`SingleFlightGroup[T]` deduplicates concurrent work by key.
 
-For a given key, the first caller executes the provided function, and concurrent callers for the same key wait for the first call to complete and receive the same (value, error) result.
-
-`Do` returns the value, error, and whether the result was shared with other callers (`shared == true` means this call did not execute the function itself).
-
-If the function returns a non-nil error, `Do` returns the zero value of `T` along with that error.
+- Zero value is ready for use.
+- `Do(key, fn)` returns `(value, err, shared)`.
+- `shared == true` means this call received another call's result.
+- On `fn` error, `Do` returns zero `T` plus the error.
 
 ```go
-import sync "github.com/alexfalkowski/go-sync"
-
-g := sync.NewSingleFlightGroup[int]()
+var g sync.SingleFlightGroup[int] // zero value is usable
 
 v, err, shared := g.Do("key", func() (int, error) {
-    // Do something important.
-    return 1, nil
+	return 42, nil
 })
 _, _, _ = v, err, shared
 
-// Forget clears any in-flight or completed result for the key,
-// so a future Do("key", ...) will execute the function again.
-g.Forget("key")
+g.Forget("key") // next Do("key", ...) executes fn again
+```
+
+## Pool
+
+### Generic Pool
+
+`Pool[T]` is a typed wrapper around [`sync.Pool`](https://pkg.go.dev/sync#Pool).
+
+- Stores `*T` values.
+- Zero value is not ready; use `NewPool[T]()`.
+- Follows normal `sync.Pool` semantics (runtime may drop entries anytime).
+
+```go
+type item struct {
+	ID int
+}
+
+pool := sync.NewPool[item]()
+it := pool.Get()
+it.ID = 10
+pool.Put(it)
+```
+
+### BufferPool
+
+`BufferPool` is a convenience wrapper over `Pool[bytes.Buffer]`.
+
+- `Get` returns `*bytes.Buffer`.
+- `Put` resets the buffer (nil-safe no-op).
+- `Copy` returns a cloned `[]byte` (non-aliasing, nil-safe).
+
+```go
+bp := sync.NewBufferPool()
+buf := bp.Get()
+defer bp.Put(buf)
+
+buf.WriteString("hello")
+out := bp.Copy(buf) // []byte("hello"), safe copy
+_ = out
+```
+
+## Value
+
+`Value[T]` is a typed wrapper around [`atomic.Value`](https://pkg.go.dev/sync/atomic#Value).
+
+- Zero value is ready.
+- `Load` and `Swap` return zero `T` if unset.
+- Same underlying constraints as `atomic.Value` apply.
+
+```go
+var v sync.Value[int] // zero value is usable
+
+current := v.Load() // 0
+_ = current
+
+v.Store(1)
+prev := v.Swap(2) // 1
+ok := v.CompareAndSwap(2, 3)
+_, _ = prev, ok
 ```
 
 ## Map
 
-We have a generic map based on [sync.Map](https://pkg.go.dev/sync#Map).
+`Map[K, V]` is a typed wrapper around [`sync.Map`](https://pkg.go.dev/sync#Map).
 
-The zero value of Map is ready for use (NewMap is optional). Note: storing a nil interface value can cause methods that type-assert internally (for example, Range) to panic.
+- Zero value is ready (`NewMap` is optional).
+- `Load`, `LoadOrStore`, `LoadAndDelete`, and `Swap` return zero `V` when needed; use boolean flags to distinguish missing keys.
+- If `V` is an interface type, storing a nil interface value can still panic in methods that type-assert stored values like `Range`.
 
 ```go
-import sync "github.com/alexfalkowski/go-sync"
-
 m := sync.NewMap[string, int]()
 
 m.Store("one", 1)
-
 v, ok := m.Load("one")
-if ok {
-    // Do something with v.
-}
+_, _ = v, ok
+
+prev, loaded := m.LoadOrStore("one", 99) // prev=1, loaded=true
+_, _ = prev, loaded
 
 m.Range(func(k string, v int) bool {
-    // Do something with k and v.
-    return true
+	fmt.Println(k, v)
+	return true
 })
 ```
+
+Nil interface edge-case example:
+
+```go
+m := sync.NewMap[string, io.Reader]()
+
+var r io.Reader // nil interface value
+v, loaded := m.LoadOrStore("reader", r)
+_, _ = v, loaded // safe for LoadOrStore
+
+// Avoid calling Range if you may have stored nil interface values;
+// Range type-asserts values and may panic on untyped nil.
+```
+
+## Background / References
+
+This library draws inspiration from:
+
+- <https://go.dev/blog/pipelines>
+- <https://go.dev/talks/2012/concurrency.slide>
+- <https://gobyexample.com/timeouts>
+- <https://go.dev/wiki/Timeouts>
+- <https://github.com/lotusirous/go-concurrency-patterns>

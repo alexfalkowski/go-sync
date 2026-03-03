@@ -28,8 +28,8 @@ func NewMap[K comparable, V any]() Map[K, V] {
 // Internally, sync.Map stores values as `any`. This wrapper type-asserts stored
 // values back to V for some operations. If V is an interface type, storing a nil
 // interface value (for example, `var r io.Reader = nil`) results in an untyped nil
-// being stored, which will cause methods that type-assert (such as [Map.Range] and
-// [Map.LoadOrStore]) to panic.
+// being stored, which will cause methods that type-assert (such as [Map.Range]) to
+// panic.
 //
 // To avoid this, do not store nil interface values. Store a non-nil concrete value,
 // or redesign V to be a pointer/struct that can represent “no value” explicitly.
@@ -68,11 +68,15 @@ func (m *Map[K, V]) Clear() {
 //
 // Otherwise, it stores and returns the given value.
 //
-// This method panics if the stored value is nil (for example, when V is an interface
-// type and a nil value was stored), because it must type-assert the stored value to V.
+// If the stored value is nil (for example, when V is an interface type and a nil
+// value was stored), it returns the zero value of V.
 func (m *Map[K, V]) LoadOrStore(key K, value V) (V, bool) {
 	v, ok := m.m.LoadOrStore(key, value)
-	return v.(V), ok
+	if v != nil {
+		return v.(V), ok
+	}
+
+	return m.zero, ok
 }
 
 // LoadAndDelete deletes the value for key, returning the previous value if any.

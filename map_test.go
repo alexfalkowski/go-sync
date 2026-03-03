@@ -1,6 +1,8 @@
 package sync_test
 
 import (
+	"io"
+	"strings"
 	"testing"
 
 	"github.com/alexfalkowski/go-sync"
@@ -91,4 +93,18 @@ func TestMapRange(t *testing.T) {
 		require.Equal(t, "test", value)
 		return true
 	})
+}
+
+func TestMapLoadOrStoreNilInterfaceValue(t *testing.T) {
+	m := sync.NewMap[string, io.Reader]()
+	defer m.Clear()
+
+	var r io.Reader
+	v, loaded := m.LoadOrStore("test", r)
+	require.Nil(t, v)
+	require.False(t, loaded)
+
+	v, loaded = m.LoadOrStore("test", strings.NewReader("x"))
+	require.Nil(t, v)
+	require.True(t, loaded)
 }
