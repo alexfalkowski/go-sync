@@ -19,9 +19,7 @@ type ErrorGroup = errgroup.Group
 // A SingleFlightGroup is a generic wrapper around [singleflight.Group] that provides type-safe
 // results (via the type parameter T) while preserving singleflight semantics.
 func NewSingleFlightGroup[T any]() *SingleFlightGroup[T] {
-	return &SingleFlightGroup[T]{
-		group: &singleflight.Group{},
-	}
+	return &SingleFlightGroup[T]{}
 }
 
 // SingleFlightGroup suppresses duplicate executions of functions associated with the same key.
@@ -34,6 +32,8 @@ func NewSingleFlightGroup[T any]() *SingleFlightGroup[T] {
 // concurrent callers for the same key wait for that execution to complete and
 // receive the same result.
 //
+// The zero value of SingleFlightGroup is ready for use.
+//
 // The type parameter T describes the value returned from [SingleFlightGroup.Do].
 // If the function returns a non-nil error, Do returns the zero value of T along
 // with that error.
@@ -43,7 +43,7 @@ func NewSingleFlightGroup[T any]() *SingleFlightGroup[T] {
 // As long as the function passed to Do returns a value of type T, the assertion
 // will succeed.
 type SingleFlightGroup[T any] struct {
-	group *singleflight.Group
+	group singleflight.Group
 	zero  T
 }
 
@@ -65,6 +65,13 @@ func (g *SingleFlightGroup[T]) Do(key string, fn func() (T, error)) (T, error, b
 	if err != nil {
 		return g.zero, err, shared
 	}
+
+	// When T is an interface, fn may successfully return a nil interface value.
+	// singleflight stores that as an untyped nil, so avoid asserting nil to T.
+	if v == nil {
+		return g.zero, nil, shared
+	}
+
 	return v.(T), nil, shared
 }
 
