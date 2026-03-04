@@ -66,6 +66,10 @@ func IsTimeoutError(err error) bool {
 //  2. The timeout elapses: Wait returns nil immediately.
 //  3. ctx is done: Wait returns nil immediately.
 //
+// Even after receiving the OnRun result, Wait re-checks timeout/context state
+// before returning. If timeout has elapsed or ctx is done at that point, Wait
+// returns nil.
+//
 // Important: if the timeout elapses or ctx becomes done, Wait returns without
 // waiting for OnRun to finish. The OnRun goroutine may continue running in the
 // background, and any error it eventually produces will be discarded.
@@ -97,11 +101,11 @@ func Wait(ctx context.Context, timeout time.Duration, hook Hook) error {
 		case <-timer.C:
 			return nil
 		default:
+			if ctx.Err() != nil {
+				return nil
+			}
+			return err
 		}
-		if ctx.Err() != nil {
-			return nil
-		}
-		return err
 	case <-timer.C:
 		return nil
 	case <-ctx.Done():
@@ -121,6 +125,9 @@ func Wait(ctx context.Context, timeout time.Duration, hook Hook) error {
 //
 // If OnRun completes before the derived context is done, Timeout returns
 // hook.Error(ctx, hook.OnRun(ctx)) where ctx is the derived context.
+//
+// Even after receiving the OnRun result, Timeout re-checks the derived context.
+// If it is done at that point, Timeout returns ctx.Err().
 //
 // If the input ctx is already done on entry, or timeout <= 0, Timeout returns
 // the derived context error without invoking OnRun.
