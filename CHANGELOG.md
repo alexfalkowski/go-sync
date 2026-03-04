@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## Unreleased
 
+## [v1.16.0](https://github.com/alexfalkowski/go-sync/releases/tag/v1.16.0) - 2026-03-04
+
+- [`86bb556`](https://github.com/alexfalkowski/go-sync/commit/86bb5562120b8edc462cf39656b2a5cc3467afa9) feat(sync): move check to default for wait (#120)
+
 ## [v1.15.0](https://github.com/alexfalkowski/go-sync/releases/tag/v1.15.0) - 2026-03-03
 
 - [`8acfa4a`](https://github.com/alexfalkowski/go-sync/commit/8acfa4afe2e6782a2aeee8456d85777092f34543) feat(sync): deterministic canceled-context behavior in Wait/Timeout/Worker.Schedule (#119)
