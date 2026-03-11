@@ -6,6 +6,21 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## Unreleased
 
+## [v1.16.1](https://github.com/alexfalkowski/go-sync/releases/tag/v1.16.1) - 2026-03-12
+
+- [`98dce29`](https://github.com/alexfalkowski/go-sync/commit/98dce291781b48d1fe80e66e5407c779650881c6) fix(deps): bump golang.org/x/sync from 0.19.0 to 0.20.0 (#126)
+- [`047e5e7`](https://github.com/alexfalkowski/go-sync/commit/047e5e78540c92c31bc4953b355117e0f920280e) build(deps): bump bin from `000304e` to `59b1ab0` (#125)
+- [`79e57ca`](https://github.com/alexfalkowski/go-sync/commit/79e57ca056b7f866ecc67c469a2226805d5e75b0) build(ci): use alexfalkowski/release:5.58 (#132)
+- [`6735acb`](https://github.com/alexfalkowski/go-sync/commit/6735acb00c1c612097ed11169ab0d15de45d1fd9) build(ci): use latest published images (#131)
+- [`f1d1f30`](https://github.com/alexfalkowski/go-sync/commit/f1d1f30e4bb9cce7ef296e9a8f0f3c608b92154d) build(ci): add wait-all (#130)
+- [`844fe66`](https://github.com/alexfalkowski/go-sync/commit/844fe66e2c62b9894e0046b0b82b75136f0d35b4) build(ci): use latest published images (#129)
+- [`9aec5a5`](https://github.com/alexfalkowski/go-sync/commit/9aec5a5f9d37ff934c8d1e1886db076e94653b8b) build(ci): use latest published images (#128)
+- [`c0d4097`](https://github.com/alexfalkowski/go-sync/commit/c0d40972b4fdc160214ddf91f7a6f1ae906e52db) build(ci): use latest published images (#127)
+- [`05991ca`](https://github.com/alexfalkowski/go-sync/commit/05991ca4132cf586900ae9d39449c382d7fbb92e) build(ci): use latest published images (#124)
+- [`bab7e99`](https://github.com/alexfalkowski/go-sync/commit/bab7e99fac7192cfe015fc1bab57c9ec8c559de0) build(ci): use latest published images (#123)
+- [`7dd3c37`](https://github.com/alexfalkowski/go-sync/commit/7dd3c37cd154e30fc42c5320436eb9027ee738b8) build(deps): upgraded github.com/alexfalkowski/bin (#122)
+- [`358c7a6`](https://github.com/alexfalkowski/go-sync/commit/358c7a621b1b7649ab6ad5831bd6a3f4347af63c) build(ci): use latest published images (#121)
+
 ## [v1.16.0](https://github.com/alexfalkowski/go-sync/releases/tag/v1.16.0) - 2026-03-04
 
 - [`86bb556`](https://github.com/alexfalkowski/go-sync/commit/86bb5562120b8edc462cf39656b2a5cc3467afa9) feat(sync): move check to default for wait (#120)
