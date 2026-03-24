@@ -8,9 +8,15 @@ import (
 )
 
 // Mutex is an alias of [sync.Mutex].
+//
+// It is provided for convenience so users of this package can refer to a mutex
+// without importing the standard library sync package directly.
 type Mutex = sync.Mutex
 
 // RWMutex is an alias of [sync.RWMutex].
+//
+// It is provided for convenience so users of this package can refer to a
+// read/write mutex without importing the standard library sync package directly.
 type RWMutex = sync.RWMutex
 
 // ErrNoOnRunProvided is returned when [Hook.OnRun] is nil.
@@ -35,12 +41,21 @@ type ErrorHandler func(context.Context, error) error
 // returned error to [Hook.Error], which applies [Hook.OnError] if configured.
 //
 // [Hook.OnRun] must be non-nil; otherwise operations return [ErrNoOnRunProvided].
+//
+// Whether the value returned from [Hook.Error] is observed depends on the
+// calling helper:
+//   - [Wait] returns it only if OnRun finishes before timeout/cancellation wins.
+//   - [Timeout] returns it only if OnRun finishes before the derived context ends.
+//   - [Worker.Schedule] never returns it; handler errors are only observed via
+//     [Hook.OnError] side effects.
 type Hook struct {
 	OnRun   Handler
 	OnError ErrorHandler
 }
 
-// Error applies OnError when err is non-nil and OnError is set; otherwise it returns err.
+// Error applies [Hook.OnError] when err is non-nil and OnError is set.
+//
+// Otherwise, it returns err unchanged. A nil err always yields nil.
 func (h *Hook) Error(ctx context.Context, err error) error {
 	if err != nil {
 		if h.OnError != nil {
@@ -51,7 +66,9 @@ func (h *Hook) Error(ctx context.Context, err error) error {
 	return nil
 }
 
-// IsTimeoutError reports whether err is [context.DeadlineExceeded].
+// IsTimeoutError reports whether err matches [context.DeadlineExceeded].
+//
+// It uses [errors.Is], so wrapped deadline-exceeded errors also report true.
 func IsTimeoutError(err error) bool {
 	return errors.Is(err, context.DeadlineExceeded)
 }
@@ -72,7 +89,8 @@ func IsTimeoutError(err error) bool {
 //
 // Important: if the timeout elapses or ctx becomes done, Wait returns without
 // waiting for OnRun to finish. The OnRun goroutine may continue running in the
-// background, and any error it eventually produces will be discarded.
+// background. If OnRun later returns an error, Hook.OnError may still run in
+// that goroutine, but Wait discards the final return value.
 //
 // If ctx is already done on entry (or timeout <= 0), Wait returns nil without
 // invoking OnRun.
@@ -131,6 +149,11 @@ func Wait(ctx context.Context, timeout time.Duration, hook Hook) error {
 //
 // If the input ctx is already done on entry, or timeout <= 0, Timeout returns
 // the derived context error without invoking OnRun.
+//
+// As with [Wait], returning from Timeout does not forcibly stop the goroutine
+// running OnRun. If OnRun ignores ctx.Done(), it may continue running in the
+// background. Hook.OnError may still run there, but Timeout discards its return
+// value once the derived context has already ended.
 //
 // If hook.OnRun is nil, Timeout returns [ErrNoOnRunProvided].
 func Timeout(ctx context.Context, timeout time.Duration, hook Hook) error {

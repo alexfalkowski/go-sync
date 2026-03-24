@@ -24,8 +24,12 @@ type ErrorGroup = errgroup.Group
 
 // NewSingleFlightGroup creates a new [SingleFlightGroup] instance.
 //
-// A SingleFlightGroup is a generic wrapper around [singleflight.Group] that provides type-safe
-// results (via the type parameter T) while preserving singleflight semantics.
+// A SingleFlightGroup is a generic wrapper around [singleflight.Group] that
+// provides type-safe results (via the type parameter T) while preserving
+// singleflight semantics.
+//
+// The zero value of [SingleFlightGroup] is already ready for use, so calling
+// NewSingleFlightGroup is optional.
 func NewSingleFlightGroup[T any]() *SingleFlightGroup[T] {
 	return &SingleFlightGroup[T]{}
 }
@@ -50,6 +54,9 @@ func NewSingleFlightGroup[T any]() *SingleFlightGroup[T] {
 // returns values as `any`, so this wrapper performs a type assertion back to T.
 // As long as the function passed to Do returns a value of type T, the assertion
 // will succeed.
+//
+// When T is an interface type and fn returns a nil interface value, Do exposes
+// that result as the zero value of T.
 type SingleFlightGroup[T any] struct {
 	group singleflight.Group
 	zero  T
@@ -66,6 +73,9 @@ type SingleFlightGroup[T any] struct {
 //   - err is the error returned by fn.
 //   - shared reports whether the result was shared with other callers (i.e. this
 //     call did not execute fn itself).
+//
+// If fn returns a nil interface value and T is an interface type, value is the
+// zero value of T.
 func (g *SingleFlightGroup[T]) Do(key string, fn func() (T, error)) (T, error, bool) {
 	v, err, shared := g.group.Do(key, func() (any, error) {
 		return fn()
@@ -85,8 +95,8 @@ func (g *SingleFlightGroup[T]) Do(key string, fn func() (T, error)) (T, error, b
 
 // Forget forgets the in-flight or completed result for key.
 //
-// Future calls to [SingleFlightGroup.Do] with the same key will invoke their function again
-// rather than waiting for or receiving a previous result.
+// Future calls to [SingleFlightGroup.Do] with the same key will invoke their
+// function again rather than waiting for or receiving a previous result.
 func (g *SingleFlightGroup[T]) Forget(key string) {
 	g.group.Forget(key)
 }
