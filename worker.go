@@ -14,6 +14,8 @@ import (
 //
 // If count is 0, scheduling will always block until the provided context times
 // out or is canceled (because the semaphore has no capacity).
+//
+// The zero value of [Worker] is not ready for use; construct one with NewWorker.
 func NewWorker(count uint) *Worker {
 	return &Worker{
 		requests: make(chan struct{}, count),
@@ -25,6 +27,8 @@ func NewWorker(count uint) *Worker {
 //
 // Work is scheduled via [Worker.Schedule] and completion is observed via
 // [Worker.Wait]. Scheduled handlers run asynchronously in their own goroutines.
+//
+// The zero value is not ready for use.
 type Worker struct {
 	requests chan struct{}
 	wg       sync.WaitGroup
@@ -41,6 +45,8 @@ type Worker struct {
 // The timeout budget starts when Schedule is called, so time spent waiting for a
 // concurrency slot and time spent running OnRun share the same deadline.
 // This context is also passed to hook.OnError (via hook.Error) if OnRun returns a non-nil error.
+// If OnRun ignores that context and continues running after the deadline, the
+// goroutine may outlive the caller of Schedule until the handler eventually returns.
 //
 // Error handling semantics:
 //
@@ -49,6 +55,8 @@ type Worker struct {
 //     without scheduling OnRun.
 //   - Errors returned from OnRun are routed to hook.OnError (if set) and are not returned from Schedule.
 //     Schedule only reports errors related to scheduling (timeout/cancellation before a slot is acquired).
+//   - Once a handler has been scheduled successfully, Schedule returns nil even
+//     if the derived context later expires while the handler is still running.
 //
 // To wait for all scheduled handlers to complete, call [Worker.Wait].
 func (w *Worker) Schedule(ctx context.Context, timeout time.Duration, hook Hook) error {
@@ -93,6 +101,8 @@ func (w *Worker) Schedule(ctx context.Context, timeout time.Duration, hook Hook)
 //
 // It does not cancel running handlers. Cancellation is controlled by the contexts
 // provided to [Worker.Schedule] and observed by the handlers themselves.
+// Wait can be called multiple times; each call waits for the currently scheduled
+// work to finish.
 func (w *Worker) Wait() {
 	w.wg.Wait()
 }

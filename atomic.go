@@ -3,10 +3,22 @@ package sync
 import "sync/atomic"
 
 // Int32 is an alias for [atomic.Int32].
+//
+// It is provided for convenience so users of this package can refer to a typed
+// atomic integer without importing sync/atomic directly.
 type Int32 = atomic.Int32
 
 // Bool is an alias for [atomic.Bool].
+//
+// It is provided for convenience so users of this package can refer to a typed
+// atomic boolean without importing sync/atomic directly.
 type Bool = atomic.Bool
+
+// Pointer is an alias for [atomic.Pointer].
+//
+// It is provided for convenience so users of this package can refer to a typed
+// atomic pointer without importing sync/atomic directly.
+type Pointer[T any] = atomic.Pointer[T]
 
 // NewValue returns a new [Value] wrapper.
 //
@@ -37,6 +49,9 @@ func NewValue[T any]() Value[T] {
 //
 // Storing values of different concrete types in the same underlying atomic.Value
 // has the same constraints as atomic.Value itself and may panic.
+//
+// When T is an interface type, storing a nil interface value has the same
+// behavior as [atomic.Value.Store](nil) and panics.
 type Value[T any] struct {
 	v    atomic.Value
 	zero T
@@ -54,6 +69,10 @@ func (v *Value[T]) Load() T {
 }
 
 // Store atomically stores val.
+//
+// It follows [atomic.Value.Store] semantics. In particular, storing a nil
+// interface value panics, and later stores must remain compatible with the
+// concrete type established by the first store.
 func (v *Value[T]) Store(val T) {
 	v.v.Store(val)
 }
@@ -72,7 +91,8 @@ func (v *Value[T]) Swap(n T) T {
 // CompareAndSwap executes the atomic compare-and-swap operation.
 //
 // It follows [atomic.Value.CompareAndSwap] semantics. If o's dynamic type is
-// not comparable, CompareAndSwap panics.
+// not comparable, CompareAndSwap panics. As with [Value.Store], interface-typed
+// values must also satisfy atomic.Value's concrete-type rules.
 func (v *Value[T]) CompareAndSwap(o, n T) bool {
 	return v.v.CompareAndSwap(o, n)
 }

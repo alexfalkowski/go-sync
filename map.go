@@ -12,6 +12,8 @@ func NewMap[K comparable, V any]() Map[K, V] {
 // Map is a typed wrapper around [sync.Map].
 //
 // It provides a generic API while preserving sync.Map’s concurrency properties.
+// This includes sync.Map's iteration semantics: [Map.Range] does not provide a
+// consistent snapshot when concurrent stores and deletes are happening.
 //
 // # Zero value
 //
@@ -68,6 +70,8 @@ func (m *Map[K, V]) Clear() {
 // LoadOrStore returns the existing value for key if present.
 //
 // Otherwise, it stores and returns the given value.
+//
+// The returned loaded result reports whether the value was already present.
 //
 // If the stored value is nil (for example, when V is an interface type and a nil
 // value was stored), it returns the zero value of V.
@@ -127,6 +131,9 @@ func (m *Map[K, V]) CompareAndDelete(key K, old V) bool {
 }
 
 // Range calls f sequentially for each key and value present in the map.
+//
+// It follows [sync.Map.Range] semantics. In particular, Range does not
+// necessarily correspond to any consistent snapshot of the map's contents.
 //
 // If f returns false, Range stops the iteration.
 //

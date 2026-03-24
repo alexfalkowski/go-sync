@@ -21,6 +21,7 @@ func NewPool[T any]() *Pool[T] {
 // Pool is a typed wrapper around [sync.Pool].
 //
 // It stores and returns pointers to T (*T) to avoid copying large values.
+// Pool does not reset values automatically on Put.
 //
 // # Zero value
 //
@@ -52,7 +53,7 @@ func (p *Pool[T]) Get() *T {
 // Put returns b to the pool.
 //
 // Callers should ensure b is in an appropriate state for reuse (for example, by
-// resetting fields) before calling Put.
+// resetting fields) before calling Put. Nil handling matches [sync.Pool.Put].
 func (p *Pool[T]) Put(b *T) {
 	p.pool.Put(b)
 }
