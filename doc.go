@@ -19,10 +19,11 @@
 //
 // # Aliases
 //
-// Mutex, RWMutex, and WaitGroup are aliases for their counterparts in the
+// Once, Mutex, RWMutex, and WaitGroup are aliases for their counterparts in the
 // standard library sync package.
 //
-// Int32, Bool, and Pointer are aliases for atomic types from sync/atomic.
+// Int32, Int64, Uint32, Uint64, Uintptr, Bool, and Pointer[T] are aliases for
+// atomic types from sync/atomic.
 //
 // ErrorGroup is an alias for errgroup.Group.
 //

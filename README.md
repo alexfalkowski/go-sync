@@ -9,7 +9,7 @@
 
 A small Go library (package `sync`) with focused concurrency helpers:
 
-- Convenience aliases for common locks, wait groups, and atomics
+- Convenience aliases for common sync primitives and typed atomics
 - Hook-driven execution (`Wait`, `Timeout`, `Worker`)
 - Group helpers (`ErrorGroup`, `SingleFlightGroup`)
 - Typed wrappers for `sync.Pool`, `sync.Map`, and `atomic.Value`
@@ -25,7 +25,7 @@ go get github.com/alexfalkowski/go-sync
 
 The public API is intentionally small:
 
-- Aliases: `Mutex`, `RWMutex`, `WaitGroup`, `Int32`, `Bool`, `Pointer[T]`
+- Aliases: `Once`, `Mutex`, `RWMutex`, `WaitGroup`, `Int32`, `Int64`, `Uint32`, `Uint64`, `Uintptr`, `Bool`, `Pointer[T]`
 - Hooks and timeout helpers: `Hook`, `Wait`, `Timeout`, `IsTimeoutError`
 - Worker: `NewWorker`, `Worker.Schedule`, `Worker.Wait`
 - Groups: `ErrorGroup`, `NewSingleFlightGroup`, `SingleFlightGroup`
@@ -35,11 +35,10 @@ Most wrappers preserve the semantics of the standard library type they wrap whil
 
 ## Aliases
 
-The package re-exports a few commonly used synchronization primitives for convenience:
+The package re-exports a few commonly used concurrency primitives and helper types for convenience:
 
-- `Mutex` and `RWMutex` alias `sync.Mutex` and `sync.RWMutex`.
-- `WaitGroup` aliases `sync.WaitGroup`.
-- `Int32`, `Bool`, and `Pointer[T]` alias typed atomics from `sync/atomic`.
+- `Once`, `Mutex`, `RWMutex`, and `WaitGroup` alias their counterparts in `sync`.
+- `Int32`, `Int64`, `Uint32`, `Uint64`, `Uintptr`, `Bool`, and `Pointer[T]` alias typed atomics from `sync/atomic`.
 - `ErrorGroup` aliases `errgroup.Group`.
 
 These are type aliases rather than wrappers, so their behavior is exactly the same as the underlying type.

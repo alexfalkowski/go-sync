@@ -8,6 +8,30 @@ import "sync/atomic"
 // atomic integer without importing sync/atomic directly.
 type Int32 = atomic.Int32
 
+// Int64 is an alias for [atomic.Int64].
+//
+// It is provided for convenience so users of this package can refer to a typed
+// atomic integer without importing sync/atomic directly.
+type Int64 = atomic.Int64
+
+// Uint32 is an alias for [atomic.Uint32].
+//
+// It is provided for convenience so users of this package can refer to a typed
+// atomic integer without importing sync/atomic directly.
+type Uint32 = atomic.Uint32
+
+// Uint64 is an alias for [atomic.Uint64].
+//
+// It is provided for convenience so users of this package can refer to a typed
+// atomic integer without importing sync/atomic directly.
+type Uint64 = atomic.Uint64
+
+// Uintptr is an alias for [atomic.Uintptr].
+//
+// It is provided for convenience so users of this package can refer to a typed
+// atomic integer without importing sync/atomic directly.
+type Uintptr = atomic.Uintptr
+
 // Bool is an alias for [atomic.Bool].
 //
 // It is provided for convenience so users of this package can refer to a typed

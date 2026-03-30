@@ -1,6 +1,6 @@
 # AGENTS.md
 
-This repository is **`github.com/alexfalkowski/go-sync`**, a small Go library (package name: **`sync`**) that provides concurrency helpers (Wait/Timeout hooks, worker, generic pool, atomic value, and a generic `sync.Map` wrapper).
+This repository is **`github.com/alexfalkowski/go-sync`**, a small Go library (package name: **`sync`**) that provides focused concurrency helpers: hook-based wait/timeout helpers, bounded worker scheduling, errgroup/singleflight helpers, typed pool/map/atomic wrappers, and convenience aliases for sync and atomic primitives.
 
 ## Repo prerequisites / setup
 
@@ -28,7 +28,7 @@ make submodule
 
 `go.mod:1-6` declares `go 1.25.0`.
 
-The code uses APIs that are not available in older Go versions (for example `sync.WaitGroup.Go` in `worker.go:30-34`, and `t.Context()` in tests such as `sync_test.go:13-17`). Use a Go toolchain that supports those APIs.
+The code uses APIs that are not available in older Go versions (for example `sync.WaitGroup.Go` in `worker.go`, and `t.Context()` in tests such as `sync_test.go`). Use a Go toolchain that supports those APIs.
 
 CI runs in a container image `alexfalkowski/go:2.102` (`.circleci/config.yml:4-7`).
 
@@ -36,10 +36,12 @@ CI runs in a container image `alexfalkowski/go:2.102` (`.circleci/config.yml:4-7
 
 All library code is at the repo root (single Go package: `sync`):
 
-- `sync.go` – `Hook` (OnRun/OnError) and top-level helpers `Wait`, `Timeout`, `IsTimeoutError`.
+- `doc.go` – package overview and high-level semantics for the exported API.
+- `sync.go` – aliases `Once`, `Mutex`, `RWMutex`; `Hook` (OnRun/OnError) and top-level helpers `Wait`, `Timeout`, `IsTimeoutError`.
+- `group.go` – aliases `WaitGroup`, `ErrorGroup`; generic `SingleFlightGroup`.
 - `worker.go` – `Worker` with bounded scheduling and a `Wait()`.
 - `pool.go`, `bytes.go` – generic pool + `bytes.Buffer` pool.
-- `atomic.go` – generic wrapper around `atomic.Value`.
+- `atomic.go` – typed atomic aliases plus the generic `Value[T]` wrapper around `atomic.Value`.
 - `map.go` – generic wrapper around `sync.Map`.
 
 Tests are mostly written as black-box tests in package `sync_test`:
@@ -115,9 +117,10 @@ make fix-lint
 ## Conventions & patterns seen in the code
 
 - Public API is small and is tested from `sync_test` (external test package), so keep exported behavior stable.
-- `Hook` error handling is centralized in `(*Hook).Error` (`sync.go:24-33`). Most operations call `hook.Error(ctx, hook.OnRun(ctx))`.
-- `Wait` is intentionally “best effort”: on timeout or `ctx.Done()` it returns `nil` (`sync.go:55-62`). `Timeout` returns `ctx.Err()` on timeout/cancel (`sync.go:80-85`).
-- Generics are used throughout (`Map[K,V]`, `Pool[T]`, `Value[T]`), and several wrappers use type assertions; avoid changing stored types or you may introduce panics.
+- `Hook` error handling is centralized in `(*Hook).Error` in `sync.go`. `Wait`, `Timeout`, and `Worker.Schedule` all route handler errors through it.
+- `Wait` is intentionally “best effort”: on timeout or `ctx.Done()` it returns `nil`. `Timeout` returns `ctx.Err()` on timeout/cancel. `Worker.Schedule` only returns scheduling errors and routes handler errors to `OnError`.
+- The alias types (`Once`, `Mutex`, `RWMutex`, `WaitGroup`, `ErrorGroup`, `Int32`, `Int64`, `Uint32`, `Uint64`, `Uintptr`, `Bool`, `Pointer[T]`) should remain true aliases; changing them to wrappers would be a breaking API change.
+- Generics are used throughout (`SingleFlightGroup[T]`, `Map[K,V]`, `Pool[T]`, `Value[T]`), and several wrappers use type assertions; avoid changing stored types or you may introduce panics.
 
 ## Tooling dependencies (observed)
 

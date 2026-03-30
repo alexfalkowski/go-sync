@@ -7,6 +7,12 @@ import (
 	"time"
 )
 
+// Once is an alias of [sync.Once].
+//
+// It is provided for convenience so users of this package can refer to a
+// once value without importing the standard library sync package directly.
+type Once = sync.Once
+
 // Mutex is an alias of [sync.Mutex].
 //
 // It is provided for convenience so users of this package can refer to a mutex
