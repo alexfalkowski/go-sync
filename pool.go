@@ -2,7 +2,7 @@ package sync
 
 import "sync"
 
-// NewPool returns an initialized [Pool] for values of type T.
+// NewPool returns a pointer to an initialized [Pool] for values of type T.
 //
 // The pool creates new values on demand by allocating `new(T)` when empty.
 //

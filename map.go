@@ -2,11 +2,11 @@ package sync
 
 import "sync"
 
-// NewMap returns a [Map] ready for use.
+// NewMap returns a pointer to a [Map] ready for use.
 //
 // The zero value of Map is also ready for use; NewMap is purely optional.
-func NewMap[K comparable, V any]() Map[K, V] {
-	return Map[K, V]{m: sync.Map{}}
+func NewMap[K comparable, V any]() *Map[K, V] {
+	return &Map[K, V]{m: sync.Map{}}
 }
 
 // Map is a typed wrapper around [sync.Map].

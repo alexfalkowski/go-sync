@@ -23,6 +23,12 @@ func TestMapLoadOrStore(t *testing.T) {
 	require.True(t, ok)
 }
 
+func TestNewMapDirectCall(t *testing.T) {
+	v, ok := sync.NewMap[string, string]().Load("test")
+	require.Empty(t, v)
+	require.False(t, ok)
+}
+
 func TestMapLoad(t *testing.T) {
 	m := sync.NewMap[string, string]()
 	defer m.Clear()

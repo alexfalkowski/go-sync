@@ -44,11 +44,11 @@ type Bool = atomic.Bool
 // atomic pointer without importing sync/atomic directly.
 type Pointer[T any] = atomic.Pointer[T]
 
-// NewValue returns a new [Value] wrapper.
+// NewValue returns a pointer to a new [Value] wrapper.
 //
-// The returned value is ready for use.
-func NewValue[T any]() Value[T] {
-	return Value[T]{v: atomic.Value{}}
+// The returned pointer is ready for use.
+func NewValue[T any]() *Value[T] {
+	return &Value[T]{v: atomic.Value{}}
 }
 
 // Value is a typed wrapper around [atomic.Value].

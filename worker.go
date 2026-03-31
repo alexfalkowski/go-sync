@@ -6,7 +6,7 @@ import (
 	"time"
 )
 
-// NewWorker returns a [Worker] that bounds concurrent execution to count.
+// NewWorker returns a pointer to a [Worker] that bounds concurrent execution to count.
 //
 // The worker uses a buffered channel of size count as a semaphore. A call to
 // [Worker.Schedule] acquires one slot before starting work and releases it when

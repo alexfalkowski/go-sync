@@ -19,3 +19,9 @@ func TestGenericPoolPutNilDoesNotPoisonPool(t *testing.T) {
 	require.Equal(t, 0, *value)
 	pool.Put(value)
 }
+
+func TestNewPoolDirectCall(t *testing.T) {
+	value := sync.NewPool[int]().Get()
+	require.NotNil(t, value)
+	require.Equal(t, 0, *value)
+}
