@@ -25,7 +25,12 @@ func NewMap[K comparable, V any]() Map[K, V] {
 // value of V when a key is not present. Use the returned boolean to distinguish
 // “not present” from a stored zero value.
 //
-// # Nil interface values
+// # Nil interface keys and values
+//
+// If K is an interface type, storing a nil interface key results in an untyped
+// nil key being stored.
+//
+// [Map.Range] exposes such keys as the zero value of K.
 //
 // Internally, sync.Map stores values as `any`. This wrapper type-asserts stored
 // values back to V for some operations. If V is an interface type, storing a nil
@@ -37,8 +42,9 @@ func NewMap[K comparable, V any]() Map[K, V] {
 // Use the returned booleans where available to distinguish stored zero values from
 // absent keys.
 type Map[K comparable, V any] struct {
-	zero V
-	m    sync.Map
+	zk K
+	zv V
+	m  sync.Map
 }
 
 // Load returns the value stored in the map for key.
@@ -51,7 +57,7 @@ func (m *Map[K, V]) Load(key K) (V, bool) {
 		return v.(V), ok
 	}
 
-	return m.zero, ok
+	return m.zv, ok
 }
 
 // Store sets the value for key.
@@ -81,7 +87,7 @@ func (m *Map[K, V]) LoadOrStore(key K, value V) (V, bool) {
 		return v.(V), ok
 	}
 
-	return m.zero, ok
+	return m.zv, ok
 }
 
 // LoadAndDelete deletes the value for key, returning the previous value if any.
@@ -93,7 +99,7 @@ func (m *Map[K, V]) LoadAndDelete(key K) (V, bool) {
 	if v != nil {
 		return v.(V), ok
 	}
-	return m.zero, ok
+	return m.zv, ok
 }
 
 // Delete deletes the value for key.
@@ -111,7 +117,7 @@ func (m *Map[K, V]) Swap(key K, value V) (V, bool) {
 		return v.(V), ok
 	}
 
-	return m.zero, ok
+	return m.zv, ok
 }
 
 // CompareAndSwap executes the compare-and-swap operation.
@@ -137,13 +143,21 @@ func (m *Map[K, V]) CompareAndDelete(key K, old V) bool {
 //
 // If f returns false, Range stops the iteration.
 //
+// If a stored key is nil (for example, when K is an interface type and a nil
+// interface key was stored), Range passes the zero value of K to f.
+//
 // If a stored value is nil (for example, when V is an interface type and a nil
 // value was stored), Range passes the zero value of V to f.
 func (m *Map[K, V]) Range(f func(key K, value V) bool) {
 	m.m.Range(func(k, v any) bool {
-		if v != nil {
-			return f(k.(K), v.(V))
+		key := m.zk
+		if k != nil {
+			key = k.(K)
 		}
-		return f(k.(K), m.zero)
+
+		if v != nil {
+			return f(key, v.(V))
+		}
+		return f(key, m.zv)
 	})
 }
