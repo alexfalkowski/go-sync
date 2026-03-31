@@ -22,7 +22,7 @@ type WaitGroup = sync.WaitGroup
 // are captured and how `Wait` behaves, is defined by `errgroup.Group`.
 type ErrorGroup = errgroup.Group
 
-// NewSingleFlightGroup creates a new [SingleFlightGroup] instance.
+// NewSingleFlightGroup creates a pointer to a new [SingleFlightGroup] instance.
 //
 // A SingleFlightGroup is a generic wrapper around [singleflight.Group] that
 // provides type-safe results (via the type parameter T) while preserving

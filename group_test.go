@@ -43,6 +43,16 @@ func TestSingleFlightGroupZeroValue(t *testing.T) {
 	require.False(t, shared)
 }
 
+func TestNewSingleFlightGroupDirectCall(t *testing.T) {
+	v, err, shared := sync.NewSingleFlightGroup[int]().Do("test", func() (int, error) {
+		return 42, nil
+	})
+
+	require.NoError(t, err)
+	require.Equal(t, 42, v)
+	require.False(t, shared)
+}
+
 func TestSingleFlightGroupNilInterfaceValue(t *testing.T) {
 	g := sync.NewSingleFlightGroup[io.Reader]()
 

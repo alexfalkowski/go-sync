@@ -20,6 +20,10 @@ func TestValue(t *testing.T) {
 	require.False(t, value.CompareAndSwap(2, 4))
 }
 
+func TestNewValueDirectCall(t *testing.T) {
+	require.Equal(t, 0, sync.NewValue[int]().Load())
+}
+
 func TestValueCompareAndSwapPanicsWithNonComparableValues(t *testing.T) {
 	value := sync.NewValue[any]()
 	value.Store([]int{1})

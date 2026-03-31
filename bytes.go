@@ -2,7 +2,7 @@ package sync
 
 import "bytes"
 
-// NewBufferPool returns an initialized [BufferPool].
+// NewBufferPool returns a pointer to an initialized [BufferPool].
 //
 // The returned pool is ready for use and is backed by a generic [Pool] of
 // [bytes.Buffer] values.

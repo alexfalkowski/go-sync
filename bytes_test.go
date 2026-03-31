@@ -18,6 +18,10 @@ func TestPool(t *testing.T) {
 	require.NotPanics(t, func() { pool.Copy(nil) })
 }
 
+func TestNewBufferPoolDirectCall(t *testing.T) {
+	require.Nil(t, sync.NewBufferPool().Copy(nil))
+}
+
 func BenchmarkPool(b *testing.B) {
 	bs := make([]byte, 1024)
 	pool := sync.NewBufferPool()

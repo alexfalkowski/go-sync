@@ -26,6 +26,10 @@ func TestWorkerSchedule(t *testing.T) {
 	require.WithinDuration(t, time.Now(), startTime, 3*time.Second)
 }
 
+func TestNewWorkerDirectCall(t *testing.T) {
+	require.ErrorIs(t, sync.NewWorker(1).Schedule(t.Context(), time.Second, sync.Hook{}), sync.ErrNoOnRunProvided)
+}
+
 func TestWorkerScheduleTimeout(t *testing.T) {
 	worker := sync.NewWorker(1)
 	_ = worker.Schedule(t.Context(), 10*time.Millisecond, sync.Hook{
