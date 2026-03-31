@@ -53,7 +53,13 @@ func (p *Pool[T]) Get() *T {
 // Put returns b to the pool.
 //
 // Callers should ensure b is in an appropriate state for reuse (for example, by
-// resetting fields) before calling Put. Nil handling matches [sync.Pool.Put].
+// resetting fields) before calling Put.
+//
+// If b is nil, Put is a no-op.
 func (p *Pool[T]) Put(b *T) {
+	if b == nil {
+		return
+	}
+
 	p.pool.Put(b)
 }

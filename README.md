@@ -266,6 +266,7 @@ func main() {
 - Zero value is not ready; use `NewPool[T]()`.
 - Follows normal `sync.Pool` semantics (runtime may drop entries anytime).
 - Does not reset values automatically on `Put`; callers are responsible for reuse hygiene.
+- `Put(nil)` is a no-op.
 
 ```go
 package main
