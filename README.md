@@ -357,6 +357,7 @@ func main() {
 
 - Zero value is ready (`NewMap` is optional).
 - `Load`, `LoadOrStore`, `LoadAndDelete`, and `Swap` return zero `V` when needed; use boolean flags to distinguish missing keys.
+- If `K` is an interface type and a nil interface key is stored, `Range` exposes it as zero `K` (for example, `nil` for interface `K`).
 - If `V` is an interface type and a nil interface value is stored, value-returning methods expose it as zero `V` (for example, `nil` for interface `V`).
 - `Range` follows `sync.Map.Range` semantics and does not provide a consistent snapshot during concurrent mutation.
 - `Clear` removes all entries.

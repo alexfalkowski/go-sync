@@ -91,6 +91,8 @@
 // atomic.Value.Store(nil) and panics.
 //
 // Map[K,V] is a typed wrapper around sync.Map. Its zero value is ready for use.
+// If K is an interface type and a nil interface key is stored, Range exposes
+// that entry's key as the zero value of K.
 // If V is an interface type and a nil interface value is stored, methods that
 // return values expose that entry as the zero value of V. Range follows the same
 // semantics as sync.Map.Range and does not provide a consistent snapshot.

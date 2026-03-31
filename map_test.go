@@ -1,6 +1,7 @@
 package sync_test
 
 import (
+	"fmt"
 	"io"
 	"strings"
 	"testing"
@@ -149,6 +150,25 @@ func TestMapRangeNilInterfaceValue(t *testing.T) {
 			called = true
 			require.Equal(t, "reader", key)
 			require.Nil(t, value)
+			return true
+		})
+	})
+	require.True(t, called)
+}
+
+func TestMapRangeNilInterfaceKey(t *testing.T) {
+	m := sync.NewMap[fmt.Stringer, string]()
+	defer m.Clear()
+
+	var key fmt.Stringer
+	m.Store(key, "test")
+
+	called := false
+	require.NotPanics(t, func() {
+		m.Range(func(key fmt.Stringer, value string) bool {
+			called = true
+			require.Nil(t, key)
+			require.Equal(t, "test", value)
 			return true
 		})
 	})
