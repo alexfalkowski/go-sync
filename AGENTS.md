@@ -2,6 +2,13 @@
 
 This repository is **`github.com/alexfalkowski/go-sync`**, a small Go library (package name: **`sync`**) that provides focused concurrency helpers: hook-based wait/timeout helpers, bounded worker scheduling, errgroup/singleflight helpers, typed pool/map/atomic wrappers, and convenience aliases for sync and atomic primitives.
 
+## Shared skill
+
+Use the shared `coding-standards` skill from `./bin/skills/coding-standards`
+for cross-repository coding, review, testing, documentation, and PR
+conventions. Treat this `AGENTS.md` as the repo-specific companion to that
+skill.
+
 ## Repo prerequisites / setup
 
 ### Git submodule is required
