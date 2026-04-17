@@ -2,6 +2,7 @@ package sync_test
 
 import (
 	"context"
+	"errors"
 	"testing"
 	"time"
 
@@ -89,11 +90,12 @@ func TestTimeoutOperationError(t *testing.T) {
 	err := sync.Timeout(t.Context(), time.Microsecond, sync.Hook{
 		OnRun: func(ctx context.Context) error {
 			time.Sleep(time.Second)
-			return ctx.Err()
+			return context.Cause(ctx)
 		},
 	})
 
 	require.Error(t, err)
+	require.ErrorIs(t, err, sync.ErrTimeout)
 	require.True(t, sync.IsTimeoutError(err))
 }
 
@@ -112,4 +114,19 @@ func TestTimeoutContextAlreadyCanceledDoesNotRun(t *testing.T) {
 	require.ErrorIs(t, err, context.Canceled)
 	time.Sleep(20 * time.Millisecond)
 	require.False(t, called.Load())
+}
+
+func TestTimeoutReturnsContextCause(t *testing.T) {
+	ctx, cancel := context.WithCancelCause(t.Context())
+	expected := errors.New("parent canceled")
+	cancel(expected)
+
+	err := sync.Timeout(ctx, time.Second, sync.Hook{
+		OnRun: func(context.Context) error {
+			require.Fail(t, "OnRun should not be called")
+			return nil
+		},
+	})
+
+	require.ErrorIs(t, err, expected)
 }

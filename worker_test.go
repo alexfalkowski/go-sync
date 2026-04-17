@@ -2,6 +2,7 @@ package sync_test
 
 import (
 	"context"
+	"errors"
 	"testing"
 	"time"
 
@@ -46,6 +47,7 @@ func TestWorkerScheduleTimeout(t *testing.T) {
 		},
 	})
 	require.Error(t, err)
+	require.ErrorIs(t, err, sync.ErrTimeout)
 	require.True(t, sync.IsTimeoutError(err))
 
 	worker.Wait()
@@ -109,6 +111,27 @@ func TestWorkerScheduleContextAlreadyCanceledDoesNotRun(t *testing.T) {
 	require.False(t, called.Load())
 }
 
+func TestWorkerScheduleReturnsContextCause(t *testing.T) {
+	worker := sync.NewWorker(1)
+
+	ctx, cancel := context.WithCancelCause(t.Context())
+	expected := errors.New("parent canceled")
+	cancel(expected)
+
+	var called sync.Bool
+	err := worker.Schedule(ctx, time.Second, sync.Hook{
+		OnRun: func(context.Context) error {
+			called.Store(true)
+			return nil
+		},
+	})
+
+	require.ErrorIs(t, err, expected)
+	worker.Wait()
+	time.Sleep(20 * time.Millisecond)
+	require.False(t, called.Load())
+}
+
 func TestWorkerScheduleTimeoutIncludesQueueWait(t *testing.T) {
 	worker := sync.NewWorker(1)
 	started := make(chan struct{})
@@ -128,14 +151,14 @@ func TestWorkerScheduleTimeoutIncludesQueueWait(t *testing.T) {
 	err = worker.Schedule(t.Context(), 250*time.Millisecond, sync.Hook{
 		OnRun: func(ctx context.Context) error {
 			<-ctx.Done()
-			c <- ctx.Err()
+			c <- context.Cause(ctx)
 			return nil
 		},
 	})
 	require.NoError(t, err)
 
 	worker.Wait()
-	require.ErrorIs(t, <-c, context.DeadlineExceeded)
+	require.ErrorIs(t, <-c, sync.ErrTimeout)
 	require.Less(t, time.Since(begin), 325*time.Millisecond)
 }
 

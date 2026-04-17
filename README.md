@@ -26,7 +26,7 @@ go get github.com/alexfalkowski/go-sync
 The public API is intentionally small:
 
 - Aliases: `Once`, `Mutex`, `RWMutex`, `WaitGroup`, `Int32`, `Int64`, `Uint32`, `Uint64`, `Uintptr`, `Bool`, `Pointer[T]`
-- Hooks and timeout helpers: `Hook`, `Wait`, `Timeout`, `IsTimeoutError`
+- Hooks and timeout helpers: `Hook`, `ErrTimeout`, `Wait`, `Timeout`, `IsTimeoutError`
 - Worker: `NewWorker`, `Worker.Schedule`, `Worker.Wait`
 - Groups: `ErrorGroup`, `NewSingleFlightGroup`, `SingleFlightGroup`
 - Pools and wrappers: `NewPool`, `Pool[T]`, `NewBufferPool`, `BufferPool`, `NewValue`, `Value[T]`, `NewMap`, `Map[K,V]`
@@ -88,12 +88,12 @@ func main() {
 `Wait` and `Timeout` both run `Hook.OnRun`, but they differ:
 
 - `Wait`: best-effort wait up to `timeout`; returns `nil` on timeout/cancel and does not cancel `OnRun`.
-- `Timeout`: derives a timeout context for `OnRun`; returns `ctx.Err()` (`context.DeadlineExceeded` or `context.Canceled`) when the context ends first.
-- If the input context is already done, `Wait` returns `nil` immediately and `Timeout` returns `ctx.Err()` immediately (neither invokes `OnRun`).
-- If `timeout <= 0`, `Wait` returns `nil` immediately, while `Timeout` returns an already-expired context error immediately.
+- `Timeout`: derives a timeout context for `OnRun`; returns the context cause when the context ends first (`sync.ErrTimeout`, `context.Canceled`, or a parent-provided cause).
+- If the input context is already done, `Wait` returns `nil` immediately and `Timeout` returns the input context's cause immediately (neither invokes `OnRun`).
+- If `timeout <= 0`, `Wait` returns `nil` immediately, while `Timeout` returns `sync.ErrTimeout` immediately.
 - Neither helper forcibly stops `OnRun`; if the handler ignores context cancellation, it can continue running in the background.
 
-Use `sync.IsTimeoutError(err)` to check if an error is `context.DeadlineExceeded`.
+Use `sync.IsTimeoutError(err)` to check if an error matches `sync.ErrTimeout` or `context.DeadlineExceeded`.
 
 ### Wait example (best effort)
 
@@ -139,7 +139,7 @@ func main() {
     err := sync.Timeout(context.Background(), 10*time.Millisecond, sync.Hook{
         OnRun: func(ctx context.Context) error {
             <-ctx.Done()
-            return ctx.Err()
+            return context.Cause(ctx)
         },
     })
 
@@ -155,11 +155,11 @@ func main() {
 - `NewWorker(count)` returns a ready-to-use pointer to a worker with at most `count` in-flight handlers.
 - `Schedule` blocks until a slot is acquired or timeout/cancel happens.
 - The `timeout` budget starts when `Schedule` is called, so queue wait time and handler run time share the same deadline.
-- `Schedule` returns only scheduling errors (`ctx.Err()` or `ErrNoOnRunProvided`).
+- `Schedule` returns only scheduling errors (the derived context cause or `ErrNoOnRunProvided`).
 - Handler errors are routed to `Hook.OnError` and are not returned by `Schedule`.
 - Once a handler has been scheduled, `Schedule` returns `nil` even if that handler later observes `ctx.Done()`.
 - `Wait` blocks until all successfully scheduled handlers complete.
-- If the input context is already canceled, `Schedule` returns `ctx.Err()` immediately and does not schedule `OnRun`.
+- If the input context is already canceled, `Schedule` returns the input context's cause immediately and does not schedule `OnRun`.
 
 If `count == 0`, scheduling always blocks until timeout/cancel.
 

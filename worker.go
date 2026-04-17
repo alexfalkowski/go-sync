@@ -39,9 +39,11 @@ type Worker struct {
 // Schedule blocks until one of the following occurs:
 //
 //  1. A concurrency slot is acquired before the deadline: Schedule starts OnRun in a goroutine and returns nil.
-//  2. The derived timeout context is done first: Schedule returns ctx.Err().
+//  2. The derived timeout context is done first: Schedule returns
+//     [context.Cause] from that derived context.
 //
-// The context passed to OnRun is a derived context created by [context.WithTimeout] using the provided timeout.
+// The context passed to OnRun is a derived context created by
+// [context.WithTimeoutCause] using the provided timeout.
 // The timeout budget starts when Schedule is called, so time spent waiting for a
 // concurrency slot and time spent running OnRun share the same deadline.
 // This context is also passed to hook.OnError (via hook.Error) if OnRun returns a non-nil error.
@@ -51,8 +53,8 @@ type Worker struct {
 // Error handling semantics:
 //
 //   - If hook.OnRun is nil, Schedule returns [ErrNoOnRunProvided].
-//   - If the input context is already done on entry, Schedule returns ctx.Err()
-//     without scheduling OnRun.
+//   - If the input context is already done on entry, Schedule returns its
+//     cancellation cause without scheduling OnRun.
 //   - Errors returned from OnRun are routed to hook.OnError (if set) and are not returned from Schedule.
 //     Schedule only reports errors related to scheduling (timeout/cancellation before a slot is acquired).
 //   - Once a handler has been scheduled successfully, Schedule returns nil even
@@ -64,13 +66,13 @@ func (w *Worker) Schedule(ctx context.Context, timeout time.Duration, hook Hook)
 		return ErrNoOnRunProvided
 	}
 	if ctx.Err() != nil {
-		return ctx.Err()
+		return context.Cause(ctx)
 	}
 
-	ctx, cancel := context.WithTimeout(ctx, timeout)
+	ctx, cancel := context.WithTimeoutCause(ctx, timeout, ErrTimeout)
 	if ctx.Err() != nil {
 		cancel()
-		return ctx.Err()
+		return context.Cause(ctx)
 	}
 
 	select {
@@ -78,7 +80,7 @@ func (w *Worker) Schedule(ctx context.Context, timeout time.Duration, hook Hook)
 		if ctx.Err() != nil {
 			<-w.requests
 			cancel()
-			return ctx.Err()
+			return context.Cause(ctx)
 		}
 
 		w.wg.Go(func() {
@@ -91,7 +93,7 @@ func (w *Worker) Schedule(ctx context.Context, timeout time.Duration, hook Hook)
 		})
 	case <-ctx.Done():
 		cancel()
-		return ctx.Err()
+		return context.Cause(ctx)
 	}
 
 	return nil

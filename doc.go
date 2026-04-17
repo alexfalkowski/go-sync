@@ -50,9 +50,10 @@
 //
 // Timeout runs hook.OnRun using a derived context with the provided timeout.
 // If the context’s deadline expires (or it is canceled) first, Timeout returns
-// ctx.Err() (typically context.DeadlineExceeded or context.Canceled). A
-// non-positive timeout produces an already-expired derived context, so Timeout
-// returns context.DeadlineExceeded without invoking Hook.OnRun.
+// the derived context's cancellation cause (typically [ErrTimeout],
+// context.Canceled, or a parent-provided cause). A non-positive timeout
+// produces an already-expired derived context, so Timeout returns [ErrTimeout]
+// without invoking Hook.OnRun.
 //
 // In both helpers, returning from Wait or Timeout does not forcibly stop the
 // goroutine running Hook.OnRun. If OnRun ignores context cancellation, it may
@@ -64,9 +65,9 @@
 //
 // Worker schedules hook.OnRun to run asynchronously while bounding concurrency.
 // Schedule blocks until the handler is scheduled or the provided timeout
-// (via context.WithTimeout) expires. Errors returned by OnRun are routed to
-// hook.OnError (if set) and are not returned by Schedule. Use Worker.Wait to
-// wait for all scheduled handlers to finish.
+// (via context.WithTimeoutCause) expires. Errors returned by OnRun are routed
+// to hook.OnError (if set) and are not returned by Schedule. Use Worker.Wait
+// to wait for all scheduled handlers to finish.
 //
 // The zero value of Worker is not ready for use; construct one with NewWorker.
 //
