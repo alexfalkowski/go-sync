@@ -25,7 +25,7 @@ func ExampleTimeout() {
 	err := sync.Timeout(context.Background(), 10*time.Millisecond, sync.Hook{
 		OnRun: func(ctx context.Context) error {
 			<-ctx.Done()
-			return ctx.Err()
+			return context.Cause(ctx)
 		},
 	})
 

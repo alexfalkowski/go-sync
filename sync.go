@@ -3,6 +3,7 @@ package sync
 import (
 	"context"
 	"errors"
+	"fmt"
 	"sync"
 	"time"
 )
@@ -27,6 +28,11 @@ type RWMutex = sync.RWMutex
 
 // ErrNoOnRunProvided is returned when [Hook.OnRun] is nil.
 var ErrNoOnRunProvided = errors.New("no OnRun handler provided")
+
+// ErrTimeout is the timeout cause used by derived contexts in this package.
+//
+// It wraps [context.DeadlineExceeded], so [errors.Is] matches both values.
+var ErrTimeout = fmt.Errorf("timeout: %w", context.DeadlineExceeded)
 
 // Handler is the signature for [Hook.OnRun].
 //
@@ -72,11 +78,12 @@ func (h *Hook) Error(ctx context.Context, err error) error {
 	return nil
 }
 
-// IsTimeoutError reports whether err matches [context.DeadlineExceeded].
+// IsTimeoutError reports whether err matches [ErrTimeout] or
+// [context.DeadlineExceeded].
 //
 // It uses [errors.Is], so wrapped deadline-exceeded errors also report true.
 func IsTimeoutError(err error) bool {
-	return errors.Is(err, context.DeadlineExceeded)
+	return errors.Is(err, ErrTimeout) || errors.Is(err, context.DeadlineExceeded)
 }
 
 // Wait runs hook.OnRun and waits up to timeout for it to complete.
@@ -142,19 +149,20 @@ func Wait(ctx context.Context, timeout time.Duration, hook Hook) error {
 // Timeout differs from [Wait] in two key ways:
 //
 //  1. Cancellation is propagated to OnRun by passing a derived context created by
-//     [context.WithTimeout]. Well-behaved OnRun implementations should observe
+//     [context.WithTimeoutCause]. Well-behaved OnRun implementations should observe
 //     ctx.Done() and exit promptly.
-//  2. Timeout reports timeout/cancellation by returning ctx.Err() when the
+//  2. Timeout reports timeout/cancellation by returning [context.Cause] when the
 //     derived context becomes done before OnRun completes.
 //
 // If OnRun completes before the derived context is done, Timeout returns
 // hook.Error(ctx, hook.OnRun(ctx)) where ctx is the derived context.
 //
 // Even after receiving the OnRun result, Timeout re-checks the derived context.
-// If it is done at that point, Timeout returns ctx.Err().
+// If it is done at that point, Timeout returns [context.Cause].
 //
-// If the input ctx is already done on entry, or timeout <= 0, Timeout returns
-// the derived context error without invoking OnRun.
+// If the input ctx is already done on entry, Timeout returns its cancellation
+// cause without invoking OnRun. If timeout <= 0, Timeout returns [ErrTimeout]
+// without invoking OnRun.
 //
 // As with [Wait], returning from Timeout does not forcibly stop the goroutine
 // running OnRun. If OnRun ignores ctx.Done(), it may continue running in the
@@ -167,13 +175,13 @@ func Timeout(ctx context.Context, timeout time.Duration, hook Hook) error {
 		return ErrNoOnRunProvided
 	}
 	if ctx.Err() != nil {
-		return ctx.Err()
+		return context.Cause(ctx)
 	}
 
-	ctx, cancel := context.WithTimeout(ctx, timeout)
+	ctx, cancel := context.WithTimeoutCause(ctx, timeout, ErrTimeout)
 	defer cancel()
 	if ctx.Err() != nil {
-		return ctx.Err()
+		return context.Cause(ctx)
 	}
 
 	ch := make(chan error, 1)
@@ -185,10 +193,10 @@ func Timeout(ctx context.Context, timeout time.Duration, hook Hook) error {
 	select {
 	case err := <-ch:
 		if ctx.Err() != nil {
-			return ctx.Err()
+			return context.Cause(ctx)
 		}
 		return err
 	case <-ctx.Done():
-		return ctx.Err()
+		return context.Cause(ctx)
 	}
 }
