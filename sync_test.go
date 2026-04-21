@@ -86,6 +86,46 @@ func TestTimeoutError(t *testing.T) {
 	require.False(t, sync.IsTimeoutError(err))
 }
 
+func TestWaitErrorHandlerReplacesError(t *testing.T) {
+	runErr := errors.New("run failed")
+	wrappedErr := errors.New("wrapped run failed")
+	handled := make(chan error, 1)
+
+	err := sync.Wait(t.Context(), time.Second, sync.Hook{
+		OnRun: func(context.Context) error {
+			return runErr
+		},
+		OnError: func(_ context.Context, err error) error {
+			handled <- err
+			return wrappedErr
+		},
+	})
+
+	require.ErrorIs(t, err, wrappedErr)
+	require.NotErrorIs(t, err, runErr)
+	require.ErrorIs(t, <-handled, runErr)
+}
+
+func TestTimeoutErrorHandlerReplacesError(t *testing.T) {
+	runErr := errors.New("run failed")
+	wrappedErr := errors.New("wrapped run failed")
+	handled := make(chan error, 1)
+
+	err := sync.Timeout(t.Context(), time.Second, sync.Hook{
+		OnRun: func(context.Context) error {
+			return runErr
+		},
+		OnError: func(_ context.Context, err error) error {
+			handled <- err
+			return wrappedErr
+		},
+	})
+
+	require.ErrorIs(t, err, wrappedErr)
+	require.NotErrorIs(t, err, runErr)
+	require.ErrorIs(t, <-handled, runErr)
+}
+
 func TestTimeoutOperationError(t *testing.T) {
 	err := sync.Timeout(t.Context(), time.Microsecond, sync.Hook{
 		OnRun: func(ctx context.Context) error {
@@ -121,12 +161,15 @@ func TestTimeoutReturnsContextCause(t *testing.T) {
 	expected := errors.New("parent canceled")
 	cancel(expected)
 
+	var called sync.Bool
 	err := sync.Timeout(ctx, time.Second, sync.Hook{
 		OnRun: func(context.Context) error {
-			require.Fail(t, "OnRun should not be called")
+			called.Store(true)
 			return nil
 		},
 	})
 
 	require.ErrorIs(t, err, expected)
+	time.Sleep(20 * time.Millisecond)
+	require.False(t, called.Load())
 }
