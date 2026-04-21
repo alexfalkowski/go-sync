@@ -53,6 +53,23 @@ func TestWorkerScheduleTimeout(t *testing.T) {
 	worker.Wait()
 }
 
+func TestWorkerScheduleNonPositiveTimeoutDoesNotRun(t *testing.T) {
+	worker := sync.NewWorker(1)
+	var called sync.Bool
+
+	err := worker.Schedule(t.Context(), 0, sync.Hook{
+		OnRun: func(context.Context) error {
+			called.Store(true)
+			return nil
+		},
+	})
+
+	require.ErrorIs(t, err, sync.ErrTimeout)
+	require.True(t, sync.IsTimeoutError(err))
+	worker.Wait()
+	require.False(t, called.Load())
+}
+
 func TestWorkerScheduleError(t *testing.T) {
 	worker := sync.NewWorker(1)
 	handled := make(chan error, 1)
