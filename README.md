@@ -66,7 +66,7 @@ import (
     "errors"
     "fmt"
 
-    sync "github.com/alexfalkowski/go-sync"
+    "github.com/alexfalkowski/go-sync"
 )
 
 func main() {
@@ -106,7 +106,7 @@ import (
     "fmt"
     "time"
 
-    sync "github.com/alexfalkowski/go-sync"
+    "github.com/alexfalkowski/go-sync"
 )
 
 func main() {
@@ -132,7 +132,7 @@ import (
     "fmt"
     "time"
 
-    sync "github.com/alexfalkowski/go-sync"
+    "github.com/alexfalkowski/go-sync"
 )
 
 func main() {
@@ -172,7 +172,7 @@ import (
     "log"
     "time"
 
-    sync "github.com/alexfalkowski/go-sync"
+    "github.com/alexfalkowski/go-sync"
 )
 
 func main() {
@@ -212,7 +212,7 @@ import (
     "errors"
     "fmt"
 
-    sync "github.com/alexfalkowski/go-sync"
+    "github.com/alexfalkowski/go-sync"
 )
 
 func main() {
@@ -241,7 +241,7 @@ package main
 import (
     "fmt"
 
-    sync "github.com/alexfalkowski/go-sync"
+    "github.com/alexfalkowski/go-sync"
 )
 
 func main() {
@@ -274,7 +274,7 @@ package main
 import (
     "fmt"
 
-    sync "github.com/alexfalkowski/go-sync"
+    "github.com/alexfalkowski/go-sync"
 )
 
 func main() {
@@ -307,7 +307,7 @@ package main
 import (
     "fmt"
 
-    sync "github.com/alexfalkowski/go-sync"
+    "github.com/alexfalkowski/go-sync"
 )
 
 func main() {
@@ -338,7 +338,7 @@ package main
 import (
     "fmt"
 
-    sync "github.com/alexfalkowski/go-sync"
+    "github.com/alexfalkowski/go-sync"
 )
 
 func main() {
@@ -369,7 +369,7 @@ package main
 import (
     "fmt"
 
-    sync "github.com/alexfalkowski/go-sync"
+    "github.com/alexfalkowski/go-sync"
 )
 
 func main() {
@@ -398,7 +398,7 @@ import (
     "fmt"
     "io"
 
-    sync "github.com/alexfalkowski/go-sync"
+    "github.com/alexfalkowski/go-sync"
 )
 
 func main() {
