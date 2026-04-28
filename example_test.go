@@ -7,7 +7,7 @@ import (
 	"io"
 	"time"
 
-	sync "github.com/alexfalkowski/go-sync"
+	"github.com/alexfalkowski/go-sync"
 )
 
 func ExampleWait() {
