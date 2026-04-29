@@ -4,7 +4,7 @@ This repo is `github.com/alexfalkowski/go-sync`, a small Go library whose packag
 
 ## Shared Standards
 
-Use the shared `coding-standards` skill from `./bin/skills/coding-standards` for cross-repository coding, review, testing, documentation, and PR conventions. Treat this file as the repo-specific companion.
+Use the shared `coding-standards` skill from `bin/skills/coding-standards` for code changes, bug fixes, refactors, reviews, tests, linting, documentation, PR summaries, commits, Makefile changes, CI validation, and verification.
 
 ## Setup Notes
 
