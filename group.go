@@ -71,8 +71,7 @@ type SingleFlightGroup[T any] struct {
 // It returns (value, err, shared):
 //   - value is the successful result of fn (type T), or the zero value of T if err != nil.
 //   - err is the error returned by fn.
-//   - shared reports whether the result was shared with other callers (i.e. this
-//     call did not execute fn itself).
+//   - shared reports whether the result was given to multiple callers.
 //
 // If fn returns a nil interface value and T is an interface type, value is the
 // zero value of T.
