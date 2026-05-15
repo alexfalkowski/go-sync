@@ -231,7 +231,7 @@ func main() {
 
 - Zero value is ready for use; `NewSingleFlightGroup[T]()` is optional and returns a ready-to-use pointer.
 - `Do(key, fn)` returns `(value, err, shared)`.
-- `shared == true` means this call received another call's result.
+- `shared == true` means the result was given to multiple callers.
 - On `fn` error, `Do` returns zero `T` plus the error.
 - If `T` is an interface type and `fn` returns a nil interface value, `Do` exposes it as zero `T`.
 
