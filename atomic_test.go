@@ -10,18 +10,18 @@ import (
 func TestValue(t *testing.T) {
 	value := sync.NewValue[int]()
 
-	require.Equal(t, 0, value.Load())
-	require.Equal(t, 0, value.Swap(2))
+	require.Equal(t, 0, value.Load(), "new Value should load zero value")
+	require.Equal(t, 0, value.Swap(2), "first Swap should return zero value")
 
 	value.Store(1)
-	require.Equal(t, 1, value.Load())
-	require.Equal(t, 1, value.Swap(2))
-	require.True(t, value.CompareAndSwap(2, 3))
-	require.False(t, value.CompareAndSwap(2, 4))
+	require.Equal(t, 1, value.Load(), "Load should return stored value")
+	require.Equal(t, 1, value.Swap(2), "Swap should return previous value")
+	require.True(t, value.CompareAndSwap(2, 3), "CompareAndSwap should update matching value")
+	require.False(t, value.CompareAndSwap(2, 4), "CompareAndSwap should reject stale value")
 }
 
 func TestNewValueDirectCall(t *testing.T) {
-	require.Equal(t, 0, sync.NewValue[int]().Load())
+	require.Equal(t, 0, sync.NewValue[int]().Load(), "new Value should load zero value")
 }
 
 func TestValueCompareAndSwapPanicsWithNonComparableValues(t *testing.T) {

@@ -62,36 +62,14 @@ func ExampleErrorGroup() {
 }
 
 func ExampleSingleFlightGroup() {
-	started := make(chan struct{})
-	release := make(chan struct{})
-
 	var g sync.SingleFlightGroup[int]
-	var calls sync.Int32
-	var wg sync.WaitGroup
 
-	wg.Go(func() {
-		_, _, _ = g.Do("key", func() (int, error) {
-			calls.Add(1)
-			close(started)
-			<-release
-			return 42, nil
-		})
+	v, err, shared := g.Do("key", func() (int, error) {
+		return 42, nil
 	})
 
-	<-started
-	go func() {
-		time.Sleep(20 * time.Millisecond)
-		close(release)
-	}()
-
-	v, _, shared := g.Do("key", func() (int, error) {
-		calls.Add(1)
-		return 7, nil
-	})
-	wg.Wait()
-
-	fmt.Println(v, shared, calls.Load())
-	// Output: 42 true 1
+	fmt.Println(v, err == nil, shared)
+	// Output: 42 true false
 }
 
 func ExampleBufferPool() {

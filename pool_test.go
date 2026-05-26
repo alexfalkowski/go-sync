@@ -16,12 +16,12 @@ func TestGenericPoolPutNilDoesNotPoisonPool(t *testing.T) {
 
 	value := pool.Get()
 	require.NotNil(t, value)
-	require.Equal(t, 0, *value)
+	require.Equal(t, 0, *value, "pool should allocate zero value")
 	pool.Put(value)
 }
 
 func TestNewPoolDirectCall(t *testing.T) {
 	value := sync.NewPool[int]().Get()
 	require.NotNil(t, value)
-	require.Equal(t, 0, *value)
+	require.Equal(t, 0, *value, "pool should allocate zero value")
 }
