@@ -92,10 +92,10 @@ func (g *SingleFlightGroup[T]) Do(key string, fn func() (T, error)) (T, error, b
 	return v.(T), nil, shared
 }
 
-// Forget forgets the in-flight or completed result for key.
+// Forget forgets an in-flight call for key.
 //
 // Future calls to [SingleFlightGroup.Do] with the same key will invoke their
-// function again rather than waiting for or receiving a previous result.
+// function rather than waiting for the earlier call to complete.
 func (g *SingleFlightGroup[T]) Forget(key string) {
 	g.group.Forget(key)
 }
