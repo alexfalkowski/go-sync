@@ -16,17 +16,17 @@ func TestMapLoadOrStore(t *testing.T) {
 
 	v, ok := m.LoadOrStore("test", "test")
 	require.Equal(t, "test", v)
-	require.False(t, ok)
+	require.False(t, ok, "first LoadOrStore should store value")
 
 	v, ok = m.LoadOrStore("test", "test")
 	require.Equal(t, "test", v)
-	require.True(t, ok)
+	require.True(t, ok, "second LoadOrStore should load existing value")
 }
 
 func TestNewMapDirectCall(t *testing.T) {
 	v, ok := sync.NewMap[string, string]().Load("test")
 	require.Empty(t, v)
-	require.False(t, ok)
+	require.False(t, ok, "new map should not contain key")
 }
 
 func TestMapLoad(t *testing.T) {
@@ -35,13 +35,13 @@ func TestMapLoad(t *testing.T) {
 
 	v, ok := m.Load("test")
 	require.Empty(t, v)
-	require.False(t, ok)
+	require.False(t, ok, "Load should report missing key")
 
 	m.Store("test", "test")
 
 	v, ok = m.Load("test")
 	require.Equal(t, "test", v)
-	require.True(t, ok)
+	require.True(t, ok, "Load should report stored key")
 }
 
 func TestMapLoadAndDelete(t *testing.T) {
@@ -50,20 +50,25 @@ func TestMapLoadAndDelete(t *testing.T) {
 
 	v, ok := m.LoadAndDelete("test")
 	require.Empty(t, v)
-	require.False(t, ok)
+	require.False(t, ok, "LoadAndDelete should report missing key")
 
 	m.Store("test", "test")
 
 	v, ok = m.LoadAndDelete("test")
 	require.Equal(t, "test", v)
-	require.True(t, ok)
+	require.True(t, ok, "LoadAndDelete should report deleted key")
 }
 
 func TestMapDelete(t *testing.T) {
 	m := sync.NewMap[string, string]()
 	defer m.Clear()
 
+	m.Store("test", "test")
 	m.Delete("test")
+
+	v, ok := m.Load("test")
+	require.Empty(t, v)
+	require.False(t, ok, "Delete should remove stored key")
 }
 
 func TestMapSwap(t *testing.T) {
@@ -72,33 +77,33 @@ func TestMapSwap(t *testing.T) {
 
 	v, ok := m.Swap("test", "test")
 	require.Empty(t, v)
-	require.False(t, ok)
+	require.False(t, ok, "Swap should report missing previous value")
 
 	m.Store("test", "bob")
 
 	v, ok = m.Swap("test", "test")
 	require.Equal(t, "bob", v)
-	require.True(t, ok)
+	require.True(t, ok, "Swap should report replaced value")
 }
 
 func TestMapCompare(t *testing.T) {
 	m := sync.NewMap[string, string]()
 	defer m.Clear()
 
-	require.False(t, m.CompareAndSwap("test", "test", "test"))
-	require.False(t, m.CompareAndDelete("test", "test"))
+	require.False(t, m.CompareAndSwap("test", "test", "test"), "CompareAndSwap should reject missing key")
+	require.False(t, m.CompareAndDelete("test", "test"), "CompareAndDelete should reject missing key")
 
 	m.Store("test", "test")
-	require.True(t, m.CompareAndSwap("test", "test", "updated"))
+	require.True(t, m.CompareAndSwap("test", "test", "updated"), "CompareAndSwap should update matching value")
 
 	v, ok := m.Load("test")
-	require.True(t, ok)
+	require.True(t, ok, "Load should find swapped key")
 	require.Equal(t, "updated", v)
 
-	require.True(t, m.CompareAndDelete("test", "updated"))
+	require.True(t, m.CompareAndDelete("test", "updated"), "CompareAndDelete should delete matching value")
 
 	_, ok = m.Load("test")
-	require.False(t, ok)
+	require.False(t, ok, "CompareAndDelete should remove key")
 }
 
 func TestMapComparePanicsWithNonComparableValues(t *testing.T) {
@@ -136,11 +141,11 @@ func TestMapLoadOrStoreNilInterfaceValue(t *testing.T) {
 	var r io.Reader
 	v, loaded := m.LoadOrStore("test", r)
 	require.Nil(t, v)
-	require.False(t, loaded)
+	require.False(t, loaded, "first nil interface LoadOrStore should store value")
 
 	v, loaded = m.LoadOrStore("test", strings.NewReader("x"))
 	require.Nil(t, v)
-	require.True(t, loaded)
+	require.True(t, loaded, "second nil interface LoadOrStore should load stored nil")
 }
 
 func TestMapRangeNilInterfaceValue(t *testing.T) {
@@ -159,7 +164,7 @@ func TestMapRangeNilInterfaceValue(t *testing.T) {
 			return true
 		})
 	})
-	require.True(t, called)
+	require.True(t, called, "Range should visit nil interface value")
 }
 
 func TestMapRangeNilInterfaceKey(t *testing.T) {
@@ -178,5 +183,5 @@ func TestMapRangeNilInterfaceKey(t *testing.T) {
 			return true
 		})
 	})
-	require.True(t, called)
+	require.True(t, called, "Range should visit nil interface key")
 }

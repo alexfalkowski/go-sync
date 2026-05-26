@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"testing"
+	"testing/synctest"
 	"time"
 
 	"github.com/alexfalkowski/go-sync"
@@ -28,12 +29,22 @@ func TestWaitError(t *testing.T) {
 }
 
 func TestWaitContinue(t *testing.T) {
-	require.NoError(t, sync.Wait(t.Context(), time.Microsecond, sync.Hook{
-		OnRun: func(context.Context) error {
-			time.Sleep(time.Second)
-			return nil
-		},
-	}))
+	synctest.Test(t, func(t *testing.T) {
+		release := make(chan struct{})
+		done := make(chan struct{})
+
+		err := sync.Wait(t.Context(), time.Second, sync.Hook{
+			OnRun: func(context.Context) error {
+				defer close(done)
+				<-release
+				return nil
+			},
+		})
+		require.NoError(t, err)
+
+		close(release)
+		<-done
+	})
 }
 
 func TestWaitNonPositiveTimeoutDoesNotRun(t *testing.T) {
@@ -45,7 +56,7 @@ func TestWaitNonPositiveTimeoutDoesNotRun(t *testing.T) {
 			return nil
 		},
 	}))
-	require.False(t, called.Load())
+	require.False(t, called.Load(), "Wait should not run hook with non-positive timeout")
 }
 
 func TestWaitContextCancel(t *testing.T) {
@@ -70,8 +81,7 @@ func TestWaitContextAlreadyCanceledDoesNotRun(t *testing.T) {
 			return nil
 		},
 	}))
-	time.Sleep(20 * time.Millisecond)
-	require.False(t, called.Load())
+	require.False(t, called.Load(), "Wait should not run hook when context is already canceled")
 }
 
 func TestWaitReturnsNilWhenContextCanceledDuringRun(t *testing.T) {
@@ -133,8 +143,8 @@ func TestTimeoutNonPositiveTimeoutDoesNotRun(t *testing.T) {
 	})
 
 	require.ErrorIs(t, err, sync.ErrTimeout)
-	require.True(t, sync.IsTimeoutError(err))
-	require.False(t, called.Load())
+	require.True(t, sync.IsTimeoutError(err), "non-positive Timeout error should be classified as timeout")
+	require.False(t, called.Load(), "Timeout should not run hook with non-positive timeout")
 }
 
 func TestTimeoutError(t *testing.T) {
@@ -150,7 +160,7 @@ func TestTimeoutError(t *testing.T) {
 	})
 
 	require.ErrorIs(t, err, context.Canceled)
-	require.False(t, sync.IsTimeoutError(err))
+	require.False(t, sync.IsTimeoutError(err), "context cancellation should not be classified as timeout")
 }
 
 func TestWaitErrorHandlerReplacesError(t *testing.T) {
@@ -194,16 +204,18 @@ func TestTimeoutErrorHandlerReplacesError(t *testing.T) {
 }
 
 func TestTimeoutOperationError(t *testing.T) {
-	err := sync.Timeout(t.Context(), time.Microsecond, sync.Hook{
-		OnRun: func(ctx context.Context) error {
-			time.Sleep(time.Second)
-			return context.Cause(ctx)
-		},
-	})
+	synctest.Test(t, func(t *testing.T) {
+		err := sync.Timeout(t.Context(), time.Second, sync.Hook{
+			OnRun: func(ctx context.Context) error {
+				<-ctx.Done()
+				return context.Cause(ctx)
+			},
+		})
 
-	require.Error(t, err)
-	require.ErrorIs(t, err, sync.ErrTimeout)
-	require.True(t, sync.IsTimeoutError(err))
+		require.Error(t, err)
+		require.ErrorIs(t, err, sync.ErrTimeout)
+		require.True(t, sync.IsTimeoutError(err), "operation timeout should be classified as timeout")
+	})
 }
 
 func TestTimeoutContextAlreadyCanceledDoesNotRun(t *testing.T) {
@@ -219,8 +231,7 @@ func TestTimeoutContextAlreadyCanceledDoesNotRun(t *testing.T) {
 	})
 
 	require.ErrorIs(t, err, context.Canceled)
-	time.Sleep(20 * time.Millisecond)
-	require.False(t, called.Load())
+	require.False(t, called.Load(), "Timeout should not run hook when context is already canceled")
 }
 
 func TestTimeoutReturnsContextCause(t *testing.T) {
@@ -237,6 +248,5 @@ func TestTimeoutReturnsContextCause(t *testing.T) {
 	})
 
 	require.ErrorIs(t, err, expected)
-	time.Sleep(20 * time.Millisecond)
-	require.False(t, called.Load())
+	require.False(t, called.Load(), "Timeout should not run hook when parent context has a cause")
 }
