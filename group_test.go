@@ -43,6 +43,26 @@ func TestSingleFlightGroupZeroValue(t *testing.T) {
 	require.False(t, shared)
 }
 
+func TestSingleFlightGroupDoesNotCacheCompletedResults(t *testing.T) {
+	g := sync.NewSingleFlightGroup[int]()
+	var calls atomic.Int32
+
+	v, err, shared := g.Do("test", func() (int, error) {
+		return int(calls.Add(1)), nil
+	})
+	require.NoError(t, err)
+	require.Equal(t, 1, v)
+	require.False(t, shared)
+
+	v, err, shared = g.Do("test", func() (int, error) {
+		return int(calls.Add(1)), nil
+	})
+	require.NoError(t, err)
+	require.Equal(t, 2, v)
+	require.False(t, shared)
+	require.EqualValues(t, 2, calls.Load())
+}
+
 func TestNewSingleFlightGroupDirectCall(t *testing.T) {
 	v, err, shared := sync.NewSingleFlightGroup[int]().Do("test", func() (int, error) {
 		return 42, nil
