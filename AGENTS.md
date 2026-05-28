@@ -13,7 +13,7 @@ matching skill for the task.
 - The `bin` git submodule is required. The root `Makefile` only includes `bin/build/make/go.mak` and `bin/build/make/git.mak`, so most `make` targets fail without it.
 - Initialize the submodule with `git submodule sync && git submodule update --init`; after `bin` exists, `make submodule` is also available.
 - `go.mod` declares `go 1.26.0`. The code uses newer APIs such as `sync.WaitGroup.Go` and test APIs such as `t.Context()`.
-- CI uses CircleCI with `alexfalkowski/go:3.17`.
+- CI uses CircleCI; see `.circleci/config.yml` for the current build image.
 
 ## Layout
 
