@@ -44,7 +44,8 @@ type Handler func(context.Context) error
 // ErrorHandler is the signature for [Hook.OnError].
 //
 // It is invoked only when a non-nil error is returned from [Hook.OnRun]. If the
-// ErrorHandler returns a different error, that error is returned to the caller.
+// ErrorHandler returns a different error, [Hook.Error] returns that error.
+// Whether that value reaches the API caller depends on the helper invoking the hook.
 type ErrorHandler func(context.Context, error) error
 
 // Hook bundles handlers used by helpers in this package.

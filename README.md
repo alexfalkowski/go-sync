@@ -26,7 +26,7 @@ go get github.com/alexfalkowski/go-sync
 The public API is intentionally small:
 
 - Aliases: `Once`, `Mutex`, `RWMutex`, `WaitGroup`, `Int32`, `Int64`, `Uint32`, `Uint64`, `Uintptr`, `Bool`, `Pointer[T]`
-- Hooks and timeout helpers: `Hook`, `ErrTimeout`, `Wait`, `Timeout`, `IsTimeoutError`
+- Hooks and timeout helpers: `Hook`, `Handler`, `ErrorHandler`, `ErrTimeout`, `Wait`, `Timeout`, `IsTimeoutError`
 - Worker: `NewWorker`, `Worker.Schedule`, `Worker.Wait`
 - Groups: `ErrorGroup`, `NewSingleFlightGroup`, `SingleFlightGroup`
 - Pools and wrappers: `NewPool`, `Pool[T]`, `NewBufferPool`, `BufferPool`, `NewValue`, `Value[T]`, `NewMap`, `Map[K,V]`

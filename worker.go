@@ -55,6 +55,7 @@ type Worker struct {
 //   - If hook.OnRun is nil, Schedule returns [ErrNoOnRunProvided].
 //   - If the input context is already done on entry, Schedule returns its
 //     cancellation cause without scheduling OnRun.
+//   - If timeout <= 0, Schedule returns [ErrTimeout] without scheduling OnRun.
 //   - Errors returned from OnRun are routed to hook.OnError (if set) and are not returned from Schedule.
 //     Schedule only reports errors related to scheduling (timeout/cancellation before a slot is acquired).
 //   - Once a handler has been scheduled successfully, Schedule returns nil even
