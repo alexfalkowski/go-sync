@@ -148,6 +148,46 @@ func TestMapLoadOrStoreNilInterfaceValue(t *testing.T) {
 	require.True(t, loaded, "second nil interface LoadOrStore should load stored nil")
 }
 
+func TestMapLoadNilInterfaceValue(t *testing.T) {
+	m := sync.NewMap[string, io.Reader]()
+	defer m.Clear()
+
+	var r io.Reader
+	m.Store("test", r)
+
+	v, ok := m.Load("test")
+	require.Nil(t, v)
+	require.True(t, ok, "Load should report stored nil interface value")
+}
+
+func TestMapLoadAndDeleteNilInterfaceValue(t *testing.T) {
+	m := sync.NewMap[string, io.Reader]()
+	defer m.Clear()
+
+	var r io.Reader
+	m.Store("test", r)
+
+	v, ok := m.LoadAndDelete("test")
+	require.Nil(t, v)
+	require.True(t, ok, "LoadAndDelete should report stored nil interface value")
+
+	v, ok = m.Load("test")
+	require.Nil(t, v)
+	require.False(t, ok, "LoadAndDelete should remove stored nil interface value")
+}
+
+func TestMapSwapNilInterfaceValue(t *testing.T) {
+	m := sync.NewMap[string, io.Reader]()
+	defer m.Clear()
+
+	var r io.Reader
+	m.Store("test", r)
+
+	v, ok := m.Swap("test", strings.NewReader("x"))
+	require.Nil(t, v)
+	require.True(t, ok, "Swap should report stored nil interface value")
+}
+
 func TestMapRangeNilInterfaceValue(t *testing.T) {
 	m := sync.NewMap[string, io.Reader]()
 	defer m.Clear()
