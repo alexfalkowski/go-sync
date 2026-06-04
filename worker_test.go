@@ -201,6 +201,46 @@ func TestWorkerScheduleReturnsContextCause(t *testing.T) {
 	require.False(t, called.Load(), "Schedule should not run hook when parent context has a cause")
 }
 
+func TestWorkerScheduleReturnsParentCauseWhenContextCanceledWhileQueued(t *testing.T) {
+	synctest.Test(t, func(t *testing.T) {
+		worker := sync.NewWorker(1)
+		started := make(chan struct{})
+		release := make(chan struct{})
+
+		err := worker.Schedule(t.Context(), time.Second, sync.Hook{
+			OnRun: func(context.Context) error {
+				close(started)
+				<-release
+				return nil
+			},
+		})
+		require.NoError(t, err)
+		<-started
+
+		ctx, cancel := context.WithCancelCause(t.Context())
+		expected := errors.New("parent canceled")
+		var called sync.Bool
+		errCh := make(chan error, 1)
+
+		go func() {
+			errCh <- worker.Schedule(ctx, time.Second, sync.Hook{
+				OnRun: func(context.Context) error {
+					called.Store(true)
+					return nil
+				},
+			})
+		}()
+		synctest.Wait()
+		cancel(expected)
+
+		require.ErrorIs(t, <-errCh, expected)
+		require.False(t, called.Load(), "queued Schedule should not run hook after parent cancellation")
+
+		close(release)
+		worker.Wait()
+	})
+}
+
 func TestWorkerScheduleTimeoutIncludesQueueWait(t *testing.T) {
 	synctest.Test(t, func(t *testing.T) {
 		worker := sync.NewWorker(1)
