@@ -70,13 +70,10 @@ type Hook struct {
 //
 // Otherwise, it returns err unchanged. A nil err always yields nil.
 func (h *Hook) Error(ctx context.Context, err error) error {
-	if err != nil {
-		if h.OnError != nil {
-			return h.OnError(ctx, err)
-		}
+	if err == nil || h.OnError == nil {
 		return err
 	}
-	return nil
+	return h.OnError(ctx, err)
 }
 
 // IsTimeoutError reports whether err matches [ErrTimeout] or
@@ -124,7 +121,6 @@ func Wait(ctx context.Context, timeout time.Duration, hook Hook) error {
 	ch := make(chan error, 1)
 	go func() {
 		ch <- hook.Error(ctx, hook.OnRun(ctx))
-		close(ch)
 	}()
 
 	select {
@@ -188,7 +184,6 @@ func Timeout(ctx context.Context, timeout time.Duration, hook Hook) error {
 	ch := make(chan error, 1)
 	go func() {
 		ch <- hook.Error(ctx, hook.OnRun(ctx))
-		close(ch)
 	}()
 
 	select {

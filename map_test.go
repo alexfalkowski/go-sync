@@ -114,11 +114,11 @@ func TestMapComparePanicsWithNonComparableValues(t *testing.T) {
 
 	require.Panics(t, func() {
 		m.CompareAndSwap("test", []int{1}, []int{2})
-	})
+	}, "CompareAndSwap should panic with non-comparable values")
 
 	require.Panics(t, func() {
 		m.CompareAndDelete("test", []int{1})
-	})
+	}, "CompareAndDelete should panic with non-comparable values")
 }
 
 func TestMapRange(t *testing.T) {
@@ -138,8 +138,8 @@ func TestMapLoadOrStoreNilInterfaceValue(t *testing.T) {
 	m := sync.NewMap[string, io.Reader]()
 	defer m.Clear()
 
-	var r io.Reader
-	v, loaded := m.LoadOrStore("test", r)
+	var nilReader io.Reader
+	v, loaded := m.LoadOrStore("test", nilReader)
 	require.Nil(t, v)
 	require.False(t, loaded, "first nil interface LoadOrStore should store value")
 
@@ -152,8 +152,8 @@ func TestMapLoadNilInterfaceValue(t *testing.T) {
 	m := sync.NewMap[string, io.Reader]()
 	defer m.Clear()
 
-	var r io.Reader
-	m.Store("test", r)
+	var nilReader io.Reader
+	m.Store("test", nilReader)
 
 	v, ok := m.Load("test")
 	require.Nil(t, v)
@@ -164,8 +164,8 @@ func TestMapLoadAndDeleteNilInterfaceValue(t *testing.T) {
 	m := sync.NewMap[string, io.Reader]()
 	defer m.Clear()
 
-	var r io.Reader
-	m.Store("test", r)
+	var nilReader io.Reader
+	m.Store("test", nilReader)
 
 	v, ok := m.LoadAndDelete("test")
 	require.Nil(t, v)
@@ -180,8 +180,8 @@ func TestMapSwapNilInterfaceValue(t *testing.T) {
 	m := sync.NewMap[string, io.Reader]()
 	defer m.Clear()
 
-	var r io.Reader
-	m.Store("test", r)
+	var nilReader io.Reader
+	m.Store("test", nilReader)
 
 	v, ok := m.Swap("test", strings.NewReader("x"))
 	require.Nil(t, v)
@@ -192,8 +192,8 @@ func TestMapRangeNilInterfaceValue(t *testing.T) {
 	m := sync.NewMap[string, io.Reader]()
 	defer m.Clear()
 
-	var r io.Reader
-	m.Store("reader", r)
+	var nilReader io.Reader
+	m.Store("reader", nilReader)
 
 	called := false
 	require.NotPanics(t, func() {

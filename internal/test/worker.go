@@ -9,7 +9,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-// NewWorkerScheduleProbe creates a probe for total schedule attempts and a concurrency limit.
+// NewWorkerScheduleProbe creates a probe for a concurrency limit and total schedule attempts.
 func NewWorkerScheduleProbe(limit int32, total int) *WorkerScheduleProbe {
 	return &WorkerScheduleProbe{
 		limit:    limit,
@@ -40,29 +40,6 @@ func (p *WorkerScheduleProbe) Schedule(ctx context.Context, worker *sync.Worker)
 			OnRun: p.run,
 		})
 	}()
-}
-
-func (p *WorkerScheduleProbe) run(context.Context) error {
-	current := p.running.Add(1)
-	defer p.running.Add(-1)
-
-	p.recordPeak(current)
-	if current > p.limit {
-		p.exceeded <- current
-	}
-
-	p.started <- struct{}{}
-	<-p.release
-	return nil
-}
-
-func (p *WorkerScheduleProbe) recordPeak(current int32) {
-	for {
-		peak := p.peak.Load()
-		if current <= peak || p.peak.CompareAndSwap(peak, current) {
-			return
-		}
-	}
 }
 
 // RequireLimitReached waits for the configured concurrency limit and verifies the peak.
@@ -97,7 +74,30 @@ func (p *WorkerScheduleProbe) RequireNeverExceeded(t *testing.T) {
 
 	select {
 	case count := <-p.exceeded:
-		require.LessOrEqual(t, count, p.limit, "worker should never exceed the configured concurrency limit")
+		require.Failf(t, "worker exceeded concurrency limit", "running handlers: %d, limit: %d", count, p.limit)
 	default:
+	}
+}
+
+func (p *WorkerScheduleProbe) run(context.Context) error {
+	current := p.running.Add(1)
+	defer p.running.Add(-1)
+
+	p.recordPeak(current)
+	if current > p.limit {
+		p.exceeded <- current
+	}
+
+	p.started <- struct{}{}
+	<-p.release
+	return nil
+}
+
+func (p *WorkerScheduleProbe) recordPeak(current int32) {
+	for {
+		peak := p.peak.Load()
+		if current <= peak || p.peak.CompareAndSwap(peak, current) {
+			return
+		}
 	}
 }

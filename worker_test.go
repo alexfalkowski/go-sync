@@ -145,13 +145,13 @@ func TestWorkerScheduleCallsOnError(t *testing.T) {
 
 func TestWorkerScheduleNotCanceledImmediately(t *testing.T) {
 	worker := sync.NewWorker(1)
-	c := make(chan error, 1)
+	errCh := make(chan error, 1)
 	release := make(chan struct{})
 
 	err := worker.Schedule(t.Context(), time.Second, sync.Hook{
 		OnRun: func(ctx context.Context) error {
 			<-release
-			c <- ctx.Err()
+			errCh <- ctx.Err()
 			return nil
 		},
 	})
@@ -159,7 +159,7 @@ func TestWorkerScheduleNotCanceledImmediately(t *testing.T) {
 
 	close(release)
 	worker.Wait()
-	require.NoError(t, <-c)
+	require.NoError(t, <-errCh)
 }
 
 func TestWorkerScheduleContextAlreadyCanceledDoesNotRun(t *testing.T) {
@@ -245,7 +245,7 @@ func TestWorkerScheduleTimeoutIncludesQueueWait(t *testing.T) {
 	synctest.Test(t, func(t *testing.T) {
 		worker := sync.NewWorker(1)
 		started := make(chan struct{})
-		c := make(chan error, 1)
+		causeCh := make(chan error, 1)
 
 		err := worker.Schedule(t.Context(), time.Second, sync.Hook{
 			OnRun: func(context.Context) error {
@@ -261,14 +261,14 @@ func TestWorkerScheduleTimeoutIncludesQueueWait(t *testing.T) {
 		err = worker.Schedule(t.Context(), 250*time.Millisecond, sync.Hook{
 			OnRun: func(ctx context.Context) error {
 				<-ctx.Done()
-				c <- context.Cause(ctx)
+				causeCh <- context.Cause(ctx)
 				return nil
 			},
 		})
 		require.NoError(t, err)
 
 		worker.Wait()
-		require.ErrorIs(t, <-c, sync.ErrTimeout)
+		require.ErrorIs(t, <-causeCh, sync.ErrTimeout)
 		require.Equal(t, 250*time.Millisecond, time.Since(begin), "timeout budget should include queue wait")
 	})
 }
@@ -276,19 +276,19 @@ func TestWorkerScheduleTimeoutIncludesQueueWait(t *testing.T) {
 func TestWorkerScheduleTimeoutBudgetExpiresAfterScheduling(t *testing.T) {
 	synctest.Test(t, func(t *testing.T) {
 		worker := sync.NewWorker(1)
-		c := make(chan error, 1)
+		causeCh := make(chan error, 1)
 
 		err := worker.Schedule(t.Context(), time.Second, sync.Hook{
 			OnRun: func(ctx context.Context) error {
 				<-ctx.Done()
-				c <- context.Cause(ctx)
+				causeCh <- context.Cause(ctx)
 				return nil
 			},
 		})
 		require.NoError(t, err)
 
 		worker.Wait()
-		require.ErrorIs(t, <-c, sync.ErrTimeout)
+		require.ErrorIs(t, <-causeCh, sync.ErrTimeout)
 	})
 }
 

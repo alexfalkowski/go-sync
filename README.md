@@ -29,7 +29,7 @@ The public API is intentionally small:
 - Hooks and timeout helpers: `Hook`, `Handler`, `ErrorHandler`, `ErrTimeout`, `Wait`, `Timeout`, `IsTimeoutError`
 - Worker: `NewWorker`, `Worker.Schedule`, `Worker.Wait`
 - Groups: `ErrorGroup`, `NewSingleFlightGroup`, `SingleFlightGroup`
-- Pools and wrappers: `NewPool`, `Pool[T]`, `NewBufferPool`, `BufferPool`, `NewValue`, `Value[T]`, `NewMap`, `Map[K,V]`
+- Pools and wrappers: `NewPool`, `Pool[T]`, `NewBufferPool`, `BufferPool`, `NewValue`, `Value[T]`, `NewMap`, `Map[K, V]`
 
 Most wrappers preserve the semantics of the standard library type they wrap while making those semantics easier to use from generic code.
 
