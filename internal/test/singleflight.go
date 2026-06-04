@@ -26,7 +26,7 @@ type BlockedSingleFlight[T any] struct {
 	done    chan SingleFlightResult[T]
 }
 
-// StartBlockedSingleFlight starts a SingleFlightGroup.Do call and blocks fn until Release.
+// StartBlockedSingleFlight starts a SingleFlightGroup.Do call and waits until Release before invoking fn.
 func StartBlockedSingleFlight[T any](
 	g *sync.SingleFlightGroup[T],
 	key string,

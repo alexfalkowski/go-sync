@@ -92,20 +92,20 @@ func (v *Value[T]) Load() T {
 	return v.zero
 }
 
-// Store atomically stores val.
+// Store atomically stores value.
 //
 // It follows [atomic.Value.Store] semantics. In particular, storing a nil
 // interface value panics, and later stores must remain compatible with the
 // concrete type established by the first store.
-func (v *Value[T]) Store(val T) {
-	v.v.Store(val)
+func (v *Value[T]) Store(value T) {
+	v.v.Store(value)
 }
 
-// Swap atomically stores n and returns the previous value.
+// Swap atomically stores new and returns the previous value.
 //
 // If no value has been stored yet, it returns the zero value of T.
-func (v *Value[T]) Swap(n T) T {
-	value := v.v.Swap(n)
+func (v *Value[T]) Swap(new T) T {
+	value := v.v.Swap(new)
 	if value != nil {
 		return value.(T)
 	}
@@ -114,9 +114,9 @@ func (v *Value[T]) Swap(n T) T {
 
 // CompareAndSwap executes the atomic compare-and-swap operation.
 //
-// It follows [atomic.Value.CompareAndSwap] semantics. If o's dynamic type is
+// It follows [atomic.Value.CompareAndSwap] semantics. If old's dynamic type is
 // not comparable, CompareAndSwap panics. As with [Value.Store], interface-typed
 // values must also satisfy atomic.Value's concrete-type rules.
-func (v *Value[T]) CompareAndSwap(o, n T) bool {
-	return v.v.CompareAndSwap(o, n)
+func (v *Value[T]) CompareAndSwap(old, new T) bool {
+	return v.v.CompareAndSwap(old, new)
 }

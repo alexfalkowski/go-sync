@@ -1,7 +1,6 @@
 package sync_test
 
 import (
-	"bytes"
 	"context"
 	"fmt"
 	"io"
@@ -142,7 +141,7 @@ func ExampleBufferPool_Get() {
 	buffer := pool.Get()
 	defer pool.Put(buffer)
 
-	buffer.Write(bytes.Repeat([]byte{'a'}, 3))
+	buffer.WriteString("aaa")
 	fmt.Println(buffer.String())
 	// Output: aaa
 }

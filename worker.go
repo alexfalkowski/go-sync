@@ -19,7 +19,6 @@ import (
 func NewWorker(count uint) *Worker {
 	return &Worker{
 		requests: make(chan struct{}, count),
-		wg:       sync.WaitGroup{},
 	}
 }
 

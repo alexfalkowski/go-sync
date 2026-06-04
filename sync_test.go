@@ -169,62 +169,68 @@ func TestHookError(t *testing.T) {
 	runErr := errors.New("run failed")
 	handledErr := errors.New("handled run failed")
 
-	called := false
-	hook := sync.Hook{
-		OnError: func(context.Context, error) error {
-			called = true
-			return handledErr
-		},
-	}
-	require.NoError(t, hook.Error(t.Context(), nil))
-	require.False(t, called, "OnError should not be called for nil errors")
+	t.Run("nil error", func(t *testing.T) {
+		called := false
+		hook := sync.Hook{
+			OnError: func(context.Context, error) error {
+				called = true
+				return handledErr
+			},
+		}
+		require.NoError(t, hook.Error(t.Context(), nil))
+		require.False(t, called, "OnError should not be called for nil errors")
+	})
 
-	hook = sync.Hook{}
-	require.ErrorIs(t, hook.Error(t.Context(), runErr), runErr)
+	t.Run("without error handler", func(t *testing.T) {
+		hook := sync.Hook{}
+		require.ErrorIs(t, hook.Error(t.Context(), runErr), runErr)
+	})
 
-	type contextKey struct{}
-	ctx := context.WithValue(t.Context(), contextKey{}, "marker")
-	hook = sync.Hook{
-		OnError: func(got context.Context, err error) error {
-			require.Equal(t, ctx, got)
-			require.Equal(t, "marker", got.Value(contextKey{}))
-			require.ErrorIs(t, err, runErr)
-			return handledErr
-		},
-	}
-	require.ErrorIs(t, hook.Error(ctx, runErr), handledErr)
+	t.Run("with error handler", func(t *testing.T) {
+		type contextKey struct{}
+		ctx := context.WithValue(t.Context(), contextKey{}, "marker")
+		hook := sync.Hook{
+			OnError: func(got context.Context, err error) error {
+				require.Equal(t, ctx, got)
+				require.Equal(t, "marker", got.Value(contextKey{}))
+				require.ErrorIs(t, err, runErr)
+				return handledErr
+			},
+		}
+		require.ErrorIs(t, hook.Error(ctx, runErr), handledErr)
+	})
 }
 
 func TestIsTimeoutError(t *testing.T) {
 	tests := map[string]struct {
-		err     error
-		timeout bool
+		err         error
+		wantTimeout bool
 	}{
 		"nil": {
-			err:     nil,
-			timeout: false,
+			err:         nil,
+			wantTimeout: false,
 		},
 		"package timeout": {
-			err:     sync.ErrTimeout,
-			timeout: true,
+			err:         sync.ErrTimeout,
+			wantTimeout: true,
 		},
 		"deadline exceeded": {
-			err:     context.DeadlineExceeded,
-			timeout: true,
+			err:         context.DeadlineExceeded,
+			wantTimeout: true,
 		},
 		"wrapped deadline exceeded": {
-			err:     fmt.Errorf("wrapped: %w", context.DeadlineExceeded),
-			timeout: true,
+			err:         fmt.Errorf("wrapped: %w", context.DeadlineExceeded),
+			wantTimeout: true,
 		},
 		"context canceled": {
-			err:     context.Canceled,
-			timeout: false,
+			err:         context.Canceled,
+			wantTimeout: false,
 		},
 	}
 
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
-			require.Equal(t, test.timeout, sync.IsTimeoutError(test.err))
+			require.Equal(t, test.wantTimeout, sync.IsTimeoutError(test.err))
 		})
 	}
 }

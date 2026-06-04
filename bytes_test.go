@@ -7,7 +7,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestPool(t *testing.T) {
+func TestBufferPool(t *testing.T) {
 	pool := sync.NewBufferPool()
 	buffer := pool.Get()
 	defer pool.Put(buffer)
@@ -45,7 +45,7 @@ func TestBufferPoolCopyDoesNotAliasBuffer(t *testing.T) {
 	require.Equal(t, "hello", string(copy), "Copy should not alias buffer storage")
 }
 
-func BenchmarkPool(b *testing.B) {
+func BenchmarkBufferPool(b *testing.B) {
 	bs := make([]byte, 1024)
 	pool := sync.NewBufferPool()
 

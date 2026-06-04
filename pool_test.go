@@ -7,7 +7,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestGenericPoolPutNilDoesNotPoisonPool(t *testing.T) {
+func TestPoolPutNilDoesNotPoisonPool(t *testing.T) {
 	pool := sync.NewPool[int]()
 
 	require.NotPanics(t, func() {
