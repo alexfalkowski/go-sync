@@ -5,7 +5,7 @@
 [![Go Reference](https://pkg.go.dev/badge/github.com/alexfalkowski/go-sync.svg)](https://pkg.go.dev/github.com/alexfalkowski/go-sync)
 [![Stability: Active](https://masterminds.github.io/stability/active.svg)](https://masterminds.github.io/stability/active.html)
 
-# go-sync
+# 🔄 go-sync
 
 A small Go library (package `sync`) with focused concurrency helpers:
 
@@ -15,25 +15,27 @@ A small Go library (package `sync`) with focused concurrency helpers:
 - Typed wrappers for `sync.Pool`, `sync.Map`, and `atomic.Value`
 - A `bytes.Buffer` pool specialized for copy-and-reuse workflows
 
-## Install
+## 📦 Install
+
+Requires Go 1.26 or newer.
 
 ```bash
 go get github.com/alexfalkowski/go-sync
 ```
 
-## Package layout
+## 🧭 Package layout
 
 The public API is intentionally small:
 
 - Aliases: `Once`, `Mutex`, `RWMutex`, `WaitGroup`, `Int32`, `Int64`, `Uint32`, `Uint64`, `Uintptr`, `Bool`, `Pointer[T]`
-- Hooks and timeout helpers: `Hook`, `Handler`, `ErrorHandler`, `ErrTimeout`, `Wait`, `Timeout`, `IsTimeoutError`
+- Hooks and timeout helpers: `Hook`, `Handler`, `ErrorHandler`, `ErrNoOnRunProvided`, `ErrTimeout`, `Wait`, `Timeout`, `IsTimeoutError`
 - Worker: `NewWorker`, `Worker.Schedule`, `Worker.Wait`
 - Groups: `ErrorGroup`, `NewSingleFlightGroup`, `SingleFlightGroup`
 - Pools and wrappers: `NewPool`, `Pool[T]`, `NewBufferPool`, `BufferPool`, `NewValue`, `Value[T]`, `NewMap`, `Map[K, V]`
 
 Most wrappers preserve the semantics of the standard library type they wrap while making those semantics easier to use from generic code.
 
-## Aliases
+## 🔁 Aliases
 
 The package re-exports a few commonly used concurrency primitives and helper types for convenience:
 
@@ -43,7 +45,7 @@ The package re-exports a few commonly used concurrency primitives and helper typ
 
 These are type aliases rather than wrappers, so their behavior is exactly the same as the underlying type.
 
-## Hooks
+## 🪝 Hooks
 
 Most execution helpers accept a `sync.Hook`:
 
@@ -83,7 +85,7 @@ func main() {
 }
 ```
 
-## Wait vs Timeout
+## ⏱️ Wait vs Timeout
 
 `Wait` and `Timeout` both run `Hook.OnRun`, but they differ:
 
@@ -95,7 +97,7 @@ func main() {
 
 Use `sync.IsTimeoutError(err)` to check if an error matches `sync.ErrTimeout` or `context.DeadlineExceeded`.
 
-### Wait example (best effort)
+### ⏳ Wait example (best effort)
 
 ```go
 package main
@@ -122,7 +124,7 @@ func main() {
 }
 ```
 
-### Timeout example (propagated cancellation)
+### 🚦 Timeout example (propagated cancellation)
 
 ```go
 package main
@@ -147,7 +149,7 @@ func main() {
 }
 ```
 
-## Worker
+## 👷 Worker
 
 `Worker` schedules asynchronous handlers with bounded concurrency.
 
@@ -156,6 +158,7 @@ func main() {
 - `Schedule` blocks until a slot is acquired or timeout/cancel happens.
 - The `timeout` budget starts when `Schedule` is called, so queue wait time and handler run time share the same deadline.
 - `Schedule` returns only scheduling errors (the derived context cause or `ErrNoOnRunProvided`).
+- If `timeout <= 0`, `Schedule` returns `sync.ErrTimeout` immediately and does not invoke `OnRun`.
 - Handler errors are routed to `Hook.OnError` and are not returned by `Schedule`.
 - Once a handler has been scheduled, `Schedule` returns `nil` even if that handler later observes `ctx.Done()`.
 - `Wait` blocks until all successfully scheduled handlers complete.
@@ -198,9 +201,9 @@ func main() {
 }
 ```
 
-## Group
+## 👥 Group
 
-### ErrorGroup / WaitGroup
+### 🧩 ErrorGroup / WaitGroup
 
 `sync.ErrorGroup` is a type alias for [`errgroup.Group`](https://pkg.go.dev/golang.org/x/sync/errgroup#Group).
 `sync.WaitGroup` is a type alias for [`sync.WaitGroup`](https://pkg.go.dev/sync#WaitGroup).
@@ -225,7 +228,7 @@ func main() {
 }
 ```
 
-### SingleFlightGroup
+### ✈️ SingleFlightGroup
 
 `SingleFlightGroup[T]` deduplicates concurrent work by key.
 
@@ -256,9 +259,9 @@ func main() {
 }
 ```
 
-## Pool
+## 🏊 Pool
 
-### Generic Pool
+### 🧺 Generic Pool
 
 `Pool[T]` is a typed wrapper around [`sync.Pool`](https://pkg.go.dev/sync#Pool).
 
@@ -291,7 +294,7 @@ func main() {
 }
 ```
 
-### BufferPool
+### 🧽 BufferPool
 
 `BufferPool` is a convenience wrapper over `Pool[bytes.Buffer]`.
 
@@ -321,7 +324,7 @@ func main() {
 }
 ```
 
-## Value
+## ⚛️ Value
 
 `Value[T]` is a typed wrapper around [`atomic.Value`](https://pkg.go.dev/sync/atomic#Value).
 
@@ -351,7 +354,7 @@ func main() {
 }
 ```
 
-## Map
+## 🗺️ Map
 
 `Map[K, V]` is a typed wrapper around [`sync.Map`](https://pkg.go.dev/sync#Map).
 
@@ -413,7 +416,7 @@ func main() {
 }
 ```
 
-## Background / References
+## 🔎 Background / References
 
 This library draws inspiration from:
 
