@@ -93,7 +93,9 @@ func main() {
 - `Timeout`: derives a timeout context for `OnRun`; returns the context cause when the context ends first (`sync.ErrTimeout`, `context.Canceled`, or a parent-provided cause).
 - If the input context is already done, `Wait` returns `nil` immediately and `Timeout` returns the input context's cause immediately (neither invokes `OnRun`).
 - If `timeout <= 0`, `Wait` returns `nil` immediately, while `Timeout` returns `sync.ErrTimeout` immediately.
-- Neither helper forcibly stops `OnRun`; if the handler ignores context cancellation, it can continue running in the background.
+
+> [!IMPORTANT]
+> Neither `Wait` nor `Timeout` forcibly stops `OnRun`. If the handler ignores context cancellation, it can continue running after the helper returns.
 
 Use `sync.IsTimeoutError(err)` to check if an error matches `sync.ErrTimeout` or `context.DeadlineExceeded`.
 
@@ -159,10 +161,12 @@ func main() {
 - The `timeout` budget starts when `Schedule` is called, so queue wait time and handler run time share the same deadline.
 - `Schedule` returns only scheduling errors (the derived context cause or `ErrNoOnRunProvided`).
 - If `timeout <= 0`, `Schedule` returns `sync.ErrTimeout` immediately and does not invoke `OnRun`.
-- Handler errors are routed to `Hook.OnError` and are not returned by `Schedule`.
 - Once a handler has been scheduled, `Schedule` returns `nil` even if that handler later observes `ctx.Done()`.
 - `Wait` blocks until all successfully scheduled handlers complete.
 - If the input context is already canceled, `Schedule` returns the input context's cause immediately and does not schedule `OnRun`.
+
+> [!NOTE]
+> `Schedule` reports scheduling errors only. Handler errors are routed through `Hook.OnError` and are not returned by `Schedule`.
 
 If `count == 0`, scheduling always blocks until timeout/cancel.
 
