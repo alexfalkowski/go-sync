@@ -2,6 +2,7 @@ package sync_test
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"time"
@@ -58,6 +59,20 @@ func ExampleErrorGroup() {
 
 	fmt.Println(g.Wait() != nil)
 	// Output: true
+}
+
+func ExampleErrorsGroup() {
+	var g sync.ErrorsGroup
+
+	first := errors.New("first")
+	second := errors.New("second")
+
+	g.Go(func() error { return first })
+	g.Go(func() error { return second })
+
+	err := g.Wait()
+	fmt.Println(errors.Is(err, first), errors.Is(err, second))
+	// Output: true true
 }
 
 func ExampleSingleFlightGroup() {
