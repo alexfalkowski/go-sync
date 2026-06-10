@@ -11,7 +11,7 @@ A small Go library (package `sync`) with focused concurrency helpers:
 
 - Convenience aliases for common sync primitives and typed atomics
 - Hook-driven execution (`Wait`, `Timeout`, `Worker`)
-- Group helpers (`ErrorGroup`, `SingleFlightGroup`)
+- Group helpers (`ErrorGroup`, `ErrorsGroup`, `SingleFlightGroup`)
 - Typed wrappers for `sync.Pool`, `sync.Map`, and `atomic.Value`
 - A `bytes.Buffer` pool specialized for copy-and-reuse workflows
 
@@ -30,7 +30,7 @@ The public API is intentionally small:
 - Aliases: `Once`, `Mutex`, `RWMutex`, `WaitGroup`, `Int32`, `Int64`, `Uint32`, `Uint64`, `Uintptr`, `Bool`, `Pointer[T]`
 - Hooks and timeout helpers: `Hook`, `Handler`, `ErrorHandler`, `ErrNoOnRunProvided`, `ErrTimeout`, `Wait`, `Timeout`, `IsTimeoutError`
 - Worker: `NewWorker`, `Worker.Schedule`, `Worker.Wait`
-- Groups: `ErrorGroup`, `NewSingleFlightGroup`, `SingleFlightGroup`
+- Groups: `ErrorGroup`, `ErrorsGroup`, `NewSingleFlightGroup`, `SingleFlightGroup`
 - Pools and wrappers: `NewPool`, `Pool[T]`, `NewBufferPool`, `BufferPool`, `NewValue`, `Value[T]`, `NewMap`, `Map[K, V]`
 
 Most wrappers preserve the semantics of the standard library type they wrap while making those semantics easier to use from generic code.
@@ -207,9 +207,10 @@ func main() {
 
 ## 👥 Group
 
-### 🧩 ErrorGroup / WaitGroup
+### 🧩 ErrorGroup / ErrorsGroup / WaitGroup
 
 `sync.ErrorGroup` is a type alias for [`errgroup.Group`](https://pkg.go.dev/golang.org/x/sync/errgroup#Group).
+`sync.ErrorsGroup` waits for every scheduled function and returns all non-nil errors joined with [`errors.Join`](https://pkg.go.dev/errors#Join).
 `sync.WaitGroup` is a type alias for [`sync.WaitGroup`](https://pkg.go.dev/sync#WaitGroup).
 
 ```go
@@ -229,6 +230,32 @@ func main() {
     g.Go(func() error { return errors.New("boom") })
 
     fmt.Println(g.Wait() != nil)
+}
+```
+
+Use `ErrorsGroup` when callers need every error rather than only the first one:
+
+```go
+package main
+
+import (
+    "errors"
+    "fmt"
+
+    "github.com/alexfalkowski/go-sync"
+)
+
+func main() {
+    var g sync.ErrorsGroup
+
+    first := errors.New("first")
+    second := errors.New("second")
+
+    g.Go(func() error { return first })
+    g.Go(func() error { return second })
+
+    err := g.Wait()
+    fmt.Println(errors.Is(err, first), errors.Is(err, second))
 }
 ```
 

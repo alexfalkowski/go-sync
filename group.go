@@ -1,6 +1,7 @@
 package sync
 
 import (
+	"errors"
 	"sync"
 
 	"golang.org/x/sync/errgroup"
@@ -21,6 +22,62 @@ type WaitGroup = sync.WaitGroup
 // Note: this is a type alias, not a wrapper. All behavior, including how errors
 // are captured and how `Wait` behaves, is defined by `errgroup.Group`.
 type ErrorGroup = errgroup.Group
+
+// ErrorsGroup runs functions concurrently and joins all returned errors.
+//
+// Unlike [ErrorGroup], which returns the first non-nil error reported by an
+// errgroup, ErrorsGroup records every non-nil error and returns them from
+// [ErrorsGroup.Wait] using [errors.Join].
+//
+// The zero value of ErrorsGroup is ready for use.
+type ErrorsGroup struct {
+	errors []error
+	wait   sync.WaitGroup
+	mutex  sync.Mutex
+}
+
+// Go calls the given function in a new goroutine.
+//
+// The first call to [ErrorsGroup.Wait] blocks until all functions started by Go
+// have returned. Non-nil errors are joined in the order the functions were
+// passed to Go, not the order they complete.
+func (g *ErrorsGroup) Go(f func() error) {
+	index := g.index()
+
+	g.wait.Go(func() {
+		if err := f(); err != nil {
+			g.add(index, err)
+		}
+	})
+}
+
+// Wait blocks until all functions started by [ErrorsGroup.Go] have returned,
+// then returns all non-nil errors joined with [errors.Join].
+func (g *ErrorsGroup) Wait() error {
+	g.wait.Wait()
+
+	g.mutex.Lock()
+	defer g.mutex.Unlock()
+
+	return errors.Join(g.errors...)
+}
+
+func (g *ErrorsGroup) index() int {
+	g.mutex.Lock()
+	defer g.mutex.Unlock()
+
+	index := len(g.errors)
+	g.errors = append(g.errors, nil)
+
+	return index
+}
+
+func (g *ErrorsGroup) add(index int, err error) {
+	g.mutex.Lock()
+	defer g.mutex.Unlock()
+
+	g.errors[index] = err
+}
 
 // NewSingleFlightGroup creates a pointer to a new [SingleFlightGroup] instance.
 //

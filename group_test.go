@@ -2,8 +2,8 @@ package sync_test
 
 import (
 	"context"
+	"errors"
 	"io"
-	"sync/atomic"
 	"testing"
 	"testing/synctest"
 
@@ -11,6 +11,39 @@ import (
 	"github.com/alexfalkowski/go-sync/internal/test"
 	"github.com/stretchr/testify/require"
 )
+
+func TestErrorsGroupWaitReturnsNilWithoutErrors(t *testing.T) {
+	var g sync.ErrorsGroup
+
+	g.Go(func() error { return nil })
+	require.NoError(t, g.Wait())
+}
+
+func TestErrorsGroupWaitJoinsErrorsInGoCallOrder(t *testing.T) {
+	var g sync.ErrorsGroup
+
+	firstErr := errors.New("first")
+	secondErr := errors.New("second")
+	firstStarted := make(chan struct{})
+	releaseFirst := make(chan struct{})
+
+	g.Go(func() error {
+		close(firstStarted)
+		<-releaseFirst
+		return firstErr
+	})
+	<-firstStarted
+
+	g.Go(func() error {
+		close(releaseFirst)
+		return secondErr
+	})
+
+	err := g.Wait()
+	require.ErrorIs(t, err, firstErr)
+	require.ErrorIs(t, err, secondErr)
+	require.EqualError(t, err, "first\nsecond")
+}
 
 func TestSingleFlightGroup(t *testing.T) {
 	g := sync.NewSingleFlightGroup[string]()
@@ -46,7 +79,7 @@ func TestSingleFlightGroupZeroValue(t *testing.T) {
 
 func TestSingleFlightGroupDoesNotCacheCompletedResults(t *testing.T) {
 	g := sync.NewSingleFlightGroup[int]()
-	var calls atomic.Int32
+	var calls sync.Int32
 
 	v, err, shared := g.Do("test", func() (int, error) {
 		return int(calls.Add(1)), nil
@@ -66,7 +99,7 @@ func TestSingleFlightGroupDoesNotCacheCompletedResults(t *testing.T) {
 
 func TestSingleFlightGroupForgetInFlight(t *testing.T) {
 	g := sync.NewSingleFlightGroup[int]()
-	var calls atomic.Int32
+	var calls sync.Int32
 
 	first := test.StartBlockedSingleFlight(g, "test", func() (int, error) {
 		calls.Add(1)
@@ -119,7 +152,7 @@ func TestSingleFlightGroupSharedResult(t *testing.T) {
 		g := sync.NewSingleFlightGroup[int]()
 		secondDone := make(chan test.SingleFlightResult[int], 1)
 
-		var calls atomic.Int32
+		var calls sync.Int32
 
 		first := test.StartBlockedSingleFlight(g, "test", func() (int, error) {
 			calls.Add(1)

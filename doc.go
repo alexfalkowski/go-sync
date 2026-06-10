@@ -10,7 +10,7 @@
 //   - Hook-based helpers for running an operation with centralized error handling.
 //   - Wait and Timeout helpers for coordinating an operation with a timeout.
 //   - Worker: a bounded scheduler for running operations concurrently.
-//   - Group helpers built on errgroup and singleflight.
+//   - Group helpers built on errgroup, errors.Join, and singleflight.
 //   - Typed wrappers around sync.Pool, sync.Map, and sync/atomic.Value.
 //   - BufferPool: a convenience pool for bytes.Buffer.
 //
@@ -25,7 +25,8 @@
 // Int32, Int64, Uint32, Uint64, Uintptr, Bool, and Pointer[T] are aliases for
 // atomic types from sync/atomic.
 //
-// ErrorGroup is an alias for errgroup.Group.
+// ErrorGroup is an alias for errgroup.Group. ErrorsGroup runs functions
+// concurrently and returns all non-nil errors joined with errors.Join.
 //
 // # Hooks
 //
@@ -72,6 +73,10 @@
 // The zero value of Worker is not ready for use; construct one with NewWorker.
 //
 // # Groups
+//
+// ErrorsGroup runs functions concurrently and waits for all of them to finish.
+// Wait returns all non-nil errors joined with errors.Join in the order the
+// functions were passed to Go.
 //
 // SingleFlightGroup[T] is a generic wrapper around singleflight.Group. Its zero
 // value is ready for use. Do returns a typed result and preserves singleflight's
