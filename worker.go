@@ -28,6 +28,7 @@ func NewWorker(count uint) *Worker {
 // [Worker.Wait]. Scheduled handlers run asynchronously in their own goroutines.
 //
 // The zero value is not ready for use.
+// A Worker must not be copied after first use; pass and store *Worker values.
 type Worker struct {
 	requests chan struct{}
 	wg       sync.WaitGroup
@@ -52,6 +53,7 @@ type Worker struct {
 // Error handling semantics:
 //
 //   - If hook.OnRun is nil, Schedule returns [ErrNoOnRunProvided].
+//     This validation happens before context or timeout shortcut checks.
 //   - If the input context is already done on entry, Schedule returns its
 //     cancellation cause without scheduling OnRun.
 //   - If timeout <= 0, Schedule returns [ErrTimeout] without scheduling OnRun.

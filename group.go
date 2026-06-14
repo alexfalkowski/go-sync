@@ -33,6 +33,8 @@ type ErrorGroup = errgroup.Group
 // for each independent batch of work.
 //
 // The zero value of ErrorsGroup is ready for use.
+//
+// An ErrorsGroup must not be copied after first use.
 type ErrorsGroup struct {
 	errors []error
 	wait   sync.WaitGroup
@@ -120,6 +122,8 @@ func NewSingleFlightGroup[T any]() *SingleFlightGroup[T] {
 //
 // When T is an interface type and fn returns a nil interface value, Do exposes
 // that result as the zero value of T.
+//
+// A SingleFlightGroup must not be copied after first use.
 type SingleFlightGroup[T any] struct {
 	group singleflight.Group
 	zero  T

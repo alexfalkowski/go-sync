@@ -52,6 +52,9 @@ Most execution helpers accept a `sync.Hook`:
 - `OnRun(context.Context) error` is required.
 - `OnError(context.Context, error) error` is optional.
 - If `OnRun` is nil, helpers return `sync.ErrNoOnRunProvided`.
+- Helpers validate `OnRun` before context cancellation or timeout shortcuts, so
+  a nil `OnRun` returns `sync.ErrNoOnRunProvided` even if the context is already
+  canceled or `timeout <= 0`.
 
 `OnError` is only called when `OnRun` returns a non-nil error. If `OnError` returns a different error, that new error is returned.
 
@@ -157,6 +160,7 @@ func main() {
 
 - Zero value is not ready; use `NewWorker(count)`.
 - `NewWorker(count)` returns a ready-to-use pointer to a worker with at most `count` in-flight handlers.
+- Do not copy a `Worker` after first use; pass and store `*Worker` values.
 - `Schedule` blocks until a slot is acquired or timeout/cancel happens.
 - The `timeout` budget starts when `Schedule` is called, so queue wait time and handler run time share the same deadline.
 - `Schedule` returns only scheduling errors (the derived context cause or `ErrNoOnRunProvided`).
@@ -237,6 +241,7 @@ Use `ErrorsGroup` when callers need every error rather than only the first one:
 
 `ErrorsGroup` retains recorded errors for its lifetime. Use a fresh `ErrorsGroup`
 for each independent batch of work.
+Do not copy an `ErrorsGroup` after first use.
 
 ```go
 package main
@@ -272,6 +277,7 @@ func main() {
 - On `fn` error, `Do` returns zero `T` plus the error.
 - If `T` is an interface type and `fn` returns a nil interface value, `Do` exposes it as zero `T`.
 - Completed results are not cached; `Forget` only affects a call that is still in flight.
+- Do not copy a `SingleFlightGroup[T]` after first use.
 
 ```go
 package main
@@ -362,6 +368,7 @@ func main() {
 `Value[T]` is a typed wrapper around [`atomic.Value`](https://pkg.go.dev/sync/atomic#Value).
 
 - Zero value is ready (`NewValue` is optional and returns a ready-to-use pointer).
+- Do not copy a `Value[T]` after first use.
 - `Load` and `Swap` return zero `T` if unset.
 - Same underlying constraints as `atomic.Value` apply.
 - If `T` is an interface type, storing or swapping a nil interface value panics just like `atomic.Value.Store(nil)` or `atomic.Value.Swap(nil)`.
@@ -392,6 +399,7 @@ func main() {
 `Map[K, V]` is a typed wrapper around [`sync.Map`](https://pkg.go.dev/sync#Map).
 
 - Zero value is ready (`NewMap` is optional and returns a ready-to-use pointer).
+- Do not copy a `Map[K, V]` after first use.
 - `Load`, `LoadOrStore`, `LoadAndDelete`, and `Swap` return zero `V` when needed; use boolean flags to distinguish missing keys.
 - If `K` is an interface type and a nil interface key is stored, `Range` exposes it as zero `K` (for example, `nil` for interface `K`).
 - If `V` is an interface type and a nil interface value is stored, value-returning methods expose it as zero `V` (for example, `nil` for interface `V`).

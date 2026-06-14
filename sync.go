@@ -54,6 +54,7 @@ type ErrorHandler func(context.Context, error) error
 // returned error to [Hook.Error], which applies [Hook.OnError] if configured.
 //
 // [Hook.OnRun] must be non-nil; otherwise operations return [ErrNoOnRunProvided].
+// Helpers validate OnRun before applying context or timeout shortcut paths.
 //
 // Whether the value returned from [Hook.Error] is observed depends on the
 // calling helper:
@@ -103,10 +104,11 @@ func IsTimeoutError(err error) bool {
 // background. If OnRun later returns an error, Hook.OnError may still run in
 // that goroutine, but Wait discards the final return value.
 //
-// If ctx is already done on entry (or timeout <= 0), Wait returns nil without
-// invoking OnRun.
+// After OnRun validation, if ctx is already done on entry (or timeout <= 0),
+// Wait returns nil without invoking OnRun.
 //
-// If hook.OnRun is nil, Wait returns [ErrNoOnRunProvided].
+// If hook.OnRun is nil, Wait returns [ErrNoOnRunProvided] before checking
+// whether ctx is done or timeout <= 0.
 func Wait(ctx context.Context, timeout time.Duration, hook Hook) error {
 	if hook.OnRun == nil {
 		return ErrNoOnRunProvided
@@ -157,16 +159,17 @@ func Wait(ctx context.Context, timeout time.Duration, hook Hook) error {
 // Even after receiving the OnRun result, Timeout re-checks the derived context.
 // If it is done at that point, Timeout returns [context.Cause].
 //
-// If the input ctx is already done on entry, Timeout returns its cancellation
-// cause without invoking OnRun. If timeout <= 0, Timeout returns [ErrTimeout]
-// without invoking OnRun.
+// After OnRun validation, if the input ctx is already done on entry, Timeout
+// returns its cancellation cause without invoking OnRun. If timeout <= 0,
+// Timeout returns [ErrTimeout] without invoking OnRun.
 //
 // As with [Wait], returning from Timeout does not forcibly stop the goroutine
 // running OnRun. If OnRun ignores ctx.Done(), it may continue running in the
 // background. Hook.OnError may still run there, but Timeout discards its return
 // value once the derived context has already ended.
 //
-// If hook.OnRun is nil, Timeout returns [ErrNoOnRunProvided].
+// If hook.OnRun is nil, Timeout returns [ErrNoOnRunProvided] before checking
+// whether ctx is done or timeout <= 0.
 func Timeout(ctx context.Context, timeout time.Duration, hook Hook) error {
 	if hook.OnRun == nil {
 		return ErrNoOnRunProvided
