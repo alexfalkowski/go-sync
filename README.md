@@ -241,6 +241,8 @@ Use `ErrorsGroup` when callers need every error rather than only the first one:
 
 `ErrorsGroup` retains recorded errors for its lifetime. Use a fresh `ErrorsGroup`
 for each independent batch of work.
+Functions passed to `ErrorsGroup.Go` must not panic; panics are not joined into
+the error returned by `Wait`.
 Do not copy an `ErrorsGroup` after first use.
 
 ```go
@@ -374,6 +376,7 @@ func main() {
 - If `T` is an interface type, storing or swapping a nil interface value panics just like `atomic.Value.Store(nil)` or `atomic.Value.Swap(nil)`.
 - When `T` is an interface or `any`, stored and swapped values must still be consistent with `atomic.Value`'s concrete-type rules.
 - `CompareAndSwap` follows `atomic.Value.CompareAndSwap`; non-comparable dynamic values in `old` can panic, and a nil interface value for `new` panics.
+- On an unset `Value`, `CompareAndSwap` can initialize only when `old` is a nil interface value; comparing against zero `T` does not generally initialize.
 
 ```go
 package main

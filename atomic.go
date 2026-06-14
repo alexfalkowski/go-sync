@@ -63,7 +63,8 @@ func NewValue[T any]() *Value[T] {
 // # Unset values
 //
 // If no value has been stored yet, [Value.Load] and [Value.Swap] return the zero
-// value of T.
+// value of T. [Value.CompareAndSwap] follows [atomic.Value.CompareAndSwap]: an
+// unset Value can be initialized only by comparing against a nil interface value.
 //
 // # Type safety and panics
 //
@@ -124,6 +125,11 @@ func (v *Value[T]) Swap(new T) T {
 // not comparable, CompareAndSwap panics. As with [Value.Store], interface-typed
 // values must also satisfy atomic.Value's nil and concrete-type rules. In
 // particular, CompareAndSwap with a nil interface value for new panics.
+//
+// If no value has been stored yet, CompareAndSwap can initialize the Value only
+// when old is a nil interface value. Comparing against T's zero value returns
+// false when that zero value is converted to a non-nil interface, such as a zero
+// number or typed nil pointer.
 func (v *Value[T]) CompareAndSwap(old, new T) bool {
 	return v.v.CompareAndSwap(old, new)
 }
