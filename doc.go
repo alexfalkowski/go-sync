@@ -76,7 +76,8 @@
 //
 // ErrorsGroup runs functions concurrently and waits for all of them to finish.
 // Wait returns all non-nil errors joined with errors.Join in the order the
-// functions were passed to Go.
+// functions were passed to Go. ErrorsGroup retains recorded errors for its
+// lifetime, so use a fresh ErrorsGroup for each independent batch of work.
 //
 // SingleFlightGroup[T] is a generic wrapper around singleflight.Group. Its zero
 // value is ready for use. Do returns a typed result and preserves singleflight's

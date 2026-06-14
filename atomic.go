@@ -71,8 +71,8 @@ func NewValue[T any]() *Value[T] {
 // the stored value back to T on Load/Swap. The assertion will succeed as long as
 // you only store values of type T in this Value.
 //
-// Storing values of different concrete types in the same underlying atomic.Value
-// has the same constraints as atomic.Value itself and may panic.
+// Storing or swapping values of different concrete types in the same underlying
+// atomic.Value has the same constraints as atomic.Value itself and may panic.
 //
 // When T is an interface type, storing a nil interface value has the same
 // behavior as [atomic.Value.Store](nil) and panics.
@@ -104,6 +104,10 @@ func (v *Value[T]) Store(value T) {
 // Swap atomically stores new and returns the previous value.
 //
 // If no value has been stored yet, it returns the zero value of T.
+//
+// It follows [atomic.Value.Swap] semantics. In particular, swapping a nil
+// interface value panics, and later swaps must remain compatible with the
+// concrete type established by the first store or swap.
 func (v *Value[T]) Swap(new T) T {
 	value := v.v.Swap(new)
 	if value != nil {
@@ -116,7 +120,8 @@ func (v *Value[T]) Swap(new T) T {
 //
 // It follows [atomic.Value.CompareAndSwap] semantics. If old's dynamic type is
 // not comparable, CompareAndSwap panics. As with [Value.Store], interface-typed
-// values must also satisfy atomic.Value's concrete-type rules.
+// values must also satisfy atomic.Value's nil and concrete-type rules. In
+// particular, CompareAndSwap with a nil interface value for new panics.
 func (v *Value[T]) CompareAndSwap(old, new T) bool {
 	return v.v.CompareAndSwap(old, new)
 }

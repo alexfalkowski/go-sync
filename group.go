@@ -29,6 +29,9 @@ type ErrorGroup = errgroup.Group
 // errgroup, ErrorsGroup records every non-nil error and returns them from
 // [ErrorsGroup.Wait] using [errors.Join].
 //
+// ErrorsGroup retains recorded errors for its lifetime. Use a fresh ErrorsGroup
+// for each independent batch of work.
+//
 // The zero value of ErrorsGroup is ready for use.
 type ErrorsGroup struct {
 	errors []error
@@ -53,6 +56,9 @@ func (g *ErrorsGroup) Go(f func() error) {
 
 // Wait blocks until all functions started by [ErrorsGroup.Go] have returned,
 // then returns all non-nil errors joined with [errors.Join].
+//
+// Wait does not clear recorded errors. A later call to Wait on the same
+// ErrorsGroup can return errors from earlier Go calls.
 func (g *ErrorsGroup) Wait() error {
 	g.wait.Wait()
 
