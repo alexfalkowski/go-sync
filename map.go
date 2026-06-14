@@ -41,6 +41,8 @@ func NewMap[K comparable, V any]() *Map[K, V] {
 // [Map.LoadAndDelete], [Map.Swap], and [Map.Range]) treat this as the zero value of V.
 // Use the returned booleans where available to distinguish stored zero values from
 // absent keys.
+//
+// A Map must not be copied after first use.
 type Map[K comparable, V any] struct {
 	zk K
 	zv V

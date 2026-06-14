@@ -76,6 +76,8 @@ func NewValue[T any]() *Value[T] {
 //
 // When T is an interface type, storing a nil interface value has the same
 // behavior as [atomic.Value.Store](nil) and panics.
+//
+// A Value must not be copied after first use.
 type Value[T any] struct {
 	v    atomic.Value
 	zero T

@@ -34,6 +34,8 @@
 // Hook.OnError is optional and centralizes error handling; when set, it is invoked
 // only when OnRun returns a non-nil error. If OnError is nil, errors are returned
 // (or ignored) as described by the calling API.
+// Hook.OnRun is validated before timeout or context-cancellation shortcuts, so
+// helpers return [ErrNoOnRunProvided] first when OnRun is nil.
 //
 // Wait and Timeout return the result of hook.Error when the operation finishes
 // before their own deadline logic wins the race. Worker never returns handler
@@ -44,17 +46,18 @@
 // There are two timeout-related helpers with different semantics:
 //
 // Wait runs hook.OnRun and waits up to the provided timeout for it to complete.
-// If the timeout expires (or the provided context is canceled) first, Wait returns
-// nil without waiting for OnRun to finish. This makes Wait a “best effort”
-// coordination helper rather than a cancellation mechanism. A non-positive
-// timeout behaves the same way and returns nil without invoking Hook.OnRun.
+// After Hook.OnRun validation, if the timeout expires (or the provided context
+// is canceled) first, Wait returns nil without waiting for OnRun to finish.
+// This makes Wait a “best effort” coordination helper rather than a cancellation
+// mechanism. A non-positive timeout behaves the same way and returns nil without
+// invoking Hook.OnRun.
 //
 // Timeout runs hook.OnRun using a derived context with the provided timeout.
-// If the context’s deadline expires (or it is canceled) first, Timeout returns
-// the derived context's cancellation cause (typically [ErrTimeout],
-// context.Canceled, or a parent-provided cause). A non-positive timeout
-// produces an already-expired derived context, so Timeout returns [ErrTimeout]
-// without invoking Hook.OnRun.
+// After Hook.OnRun validation, if the context’s deadline expires (or it is
+// canceled) first, Timeout returns the derived context's cancellation cause
+// (typically [ErrTimeout], context.Canceled, or a parent-provided cause). A
+// non-positive timeout produces an already-expired derived context, so Timeout
+// returns [ErrTimeout] without invoking Hook.OnRun.
 //
 // In both helpers, returning from Wait or Timeout does not forcibly stop the
 // goroutine running Hook.OnRun. If OnRun ignores context cancellation, it may
@@ -71,6 +74,7 @@
 // to wait for all scheduled handlers to finish.
 //
 // The zero value of Worker is not ready for use; construct one with NewWorker.
+// A Worker must not be copied after first use; pass and store *Worker values.
 //
 // # Groups
 //
@@ -78,11 +82,13 @@
 // Wait returns all non-nil errors joined with errors.Join in the order the
 // functions were passed to Go. ErrorsGroup retains recorded errors for its
 // lifetime, so use a fresh ErrorsGroup for each independent batch of work.
+// Do not copy an ErrorsGroup after first use.
 //
 // SingleFlightGroup[T] is a generic wrapper around singleflight.Group. Its zero
 // value is ready for use. Do returns a typed result and preserves singleflight's
 // shared-result behavior. When T is an interface type and the function returns a
-// nil interface value, Do exposes that result as the zero value of T.
+// nil interface value, Do exposes that result as the zero value of T. Do not copy
+// a SingleFlightGroup[T] after first use.
 //
 // # Typed wrappers
 //
@@ -95,12 +101,13 @@
 // Value[T] is a typed wrapper around atomic.Value. Its zero value is ready for use.
 // Load and Swap return the zero value of T if no value has been stored yet. When
 // T is an interface type, storing a nil interface value has the same behavior as
-// atomic.Value.Store(nil) and panics.
+// atomic.Value.Store(nil) and panics. Do not copy a Value after first use.
 //
 // Map[K,V] is a typed wrapper around sync.Map. Its zero value is ready for use.
 // If K is an interface type and a nil interface key is stored, Range exposes
 // that entry's key as the zero value of K.
 // If V is an interface type and a nil interface value is stored, methods that
 // return values expose that entry as the zero value of V. Range follows the same
-// semantics as sync.Map.Range and does not provide a consistent snapshot.
+// semantics as sync.Map.Range and does not provide a consistent snapshot. Do not
+// copy a Map after first use.
 package sync
