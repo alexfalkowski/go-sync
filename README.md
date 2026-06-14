@@ -235,6 +235,9 @@ func main() {
 
 Use `ErrorsGroup` when callers need every error rather than only the first one:
 
+`ErrorsGroup` retains recorded errors for its lifetime. Use a fresh `ErrorsGroup`
+for each independent batch of work.
+
 ```go
 package main
 
@@ -268,6 +271,7 @@ func main() {
 - `shared == true` means the result was given to multiple callers.
 - On `fn` error, `Do` returns zero `T` plus the error.
 - If `T` is an interface type and `fn` returns a nil interface value, `Do` exposes it as zero `T`.
+- Completed results are not cached; `Forget` only affects a call that is still in flight.
 
 ```go
 package main
@@ -285,8 +289,6 @@ func main() {
         return 42, nil
     })
     fmt.Println(v, err == nil, shared)
-
-    g.Forget("key")
 }
 ```
 
@@ -362,9 +364,9 @@ func main() {
 - Zero value is ready (`NewValue` is optional and returns a ready-to-use pointer).
 - `Load` and `Swap` return zero `T` if unset.
 - Same underlying constraints as `atomic.Value` apply.
-- If `T` is an interface type, storing a nil interface value panics just like `atomic.Value.Store(nil)`.
-- When `T` is an interface or `any`, stores must still be consistent with `atomic.Value`'s concrete-type rules.
-- `CompareAndSwap` follows `atomic.Value.CompareAndSwap`; when `T` is an interface, non-comparable dynamic values in `old` can panic.
+- If `T` is an interface type, storing or swapping a nil interface value panics just like `atomic.Value.Store(nil)` or `atomic.Value.Swap(nil)`.
+- When `T` is an interface or `any`, stored and swapped values must still be consistent with `atomic.Value`'s concrete-type rules.
+- `CompareAndSwap` follows `atomic.Value.CompareAndSwap`; non-comparable dynamic values in `old` can panic, and a nil interface value for `new` panics.
 
 ```go
 package main
