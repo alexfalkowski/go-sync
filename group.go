@@ -32,6 +32,9 @@ type ErrorGroup = errgroup.Group
 // ErrorsGroup retains recorded errors for its lifetime. Use a fresh ErrorsGroup
 // for each independent batch of work.
 //
+// Functions passed to [ErrorsGroup.Go] must not panic; panics are not recovered
+// or joined into the error returned by [ErrorsGroup.Wait].
+//
 // The zero value of ErrorsGroup is ready for use.
 //
 // An ErrorsGroup must not be copied after first use.
@@ -46,6 +49,10 @@ type ErrorsGroup struct {
 // The first call to [ErrorsGroup.Wait] blocks until all functions started by Go
 // have returned. Non-nil errors are joined in the order the functions were
 // passed to Go, not the order they complete.
+//
+// Go inherits [sync.WaitGroup.Go] sequencing constraints: start the first
+// function before calling Wait for an empty group, and wait for a batch to finish
+// before starting the next independent batch.
 func (g *ErrorsGroup) Go(f func() error) {
 	index := g.index()
 

@@ -38,12 +38,16 @@ func ExampleWorker() {
 	var count sync.Int32
 
 	for range 3 {
-		_ = worker.Schedule(context.Background(), time.Second, sync.Hook{
+		err := worker.Schedule(context.Background(), time.Second, sync.Hook{
 			OnRun: func(context.Context) error {
 				count.Add(1)
 				return nil
 			},
 		})
+		if err != nil {
+			fmt.Println(err)
+			return
+		}
 	}
 
 	worker.Wait()
