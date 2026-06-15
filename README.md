@@ -23,6 +23,18 @@ Requires Go 1.26 or newer.
 go get github.com/alexfalkowski/go-sync
 ```
 
+## 🧪 Local validation
+
+Local Make targets use shared tooling from the `bin` submodule. After cloning
+the repository for development, initialize it before running Make targets:
+
+```bash
+git submodule sync && git submodule update --init
+make dep
+```
+
+Then run the narrow target you need, such as `make specs`.
+
 ## 🧭 Package layout
 
 The public API is intentionally small:
@@ -55,6 +67,8 @@ Most execution helpers accept a `sync.Hook`:
 - Helpers validate `OnRun` before context cancellation or timeout shortcuts, so
   a nil `OnRun` returns `sync.ErrNoOnRunProvided` even if the context is already
   canceled or `timeout <= 0`.
+- Hook callbacks must not panic; helpers do not recover panics, pass them to
+  `OnError`, or return them as errors.
 
 `OnError` is only called when `OnRun` returns a non-nil error. If `OnError` returns a different error, that new error is returned.
 
