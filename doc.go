@@ -36,6 +36,9 @@
 // (or ignored) as described by the calling API.
 // Hook.OnRun is validated before timeout or context-cancellation shortcuts, so
 // helpers return [ErrNoOnRunProvided] first when OnRun is nil.
+// Hook callbacks must not panic. Helpers do not recover panics from Hook.OnRun
+// or Hook.OnError; a panic is not routed through Hook.OnError and is not
+// returned as an error.
 //
 // Wait and Timeout return the result of hook.Error when the operation finishes
 // before their own deadline logic wins the race. Worker never returns handler

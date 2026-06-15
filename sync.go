@@ -55,6 +55,8 @@ type ErrorHandler func(context.Context, error) error
 //
 // [Hook.OnRun] must be non-nil; otherwise operations return [ErrNoOnRunProvided].
 // Helpers validate OnRun before applying context or timeout shortcut paths.
+// Hook callbacks must not panic. Helpers do not recover panics from OnRun or
+// OnError; a panic is not routed through OnError and is not returned as an error.
 //
 // Whether the value returned from [Hook.Error] is observed depends on the
 // calling helper:
@@ -103,6 +105,7 @@ func IsTimeoutError(err error) bool {
 // waiting for OnRun to finish. The OnRun goroutine may continue running in the
 // background. If OnRun later returns an error, Hook.OnError may still run in
 // that goroutine, but Wait discards the final return value.
+// Wait does not recover panics from OnRun or OnError; see [Hook].
 //
 // After OnRun validation, if ctx is already done on entry (or timeout <= 0),
 // Wait returns nil without invoking OnRun.
@@ -167,6 +170,7 @@ func Wait(ctx context.Context, timeout time.Duration, hook Hook) error {
 // running OnRun. If OnRun ignores ctx.Done(), it may continue running in the
 // background. Hook.OnError may still run there, but Timeout discards its return
 // value once the derived context has already ended.
+// Timeout does not recover panics from OnRun or OnError; see [Hook].
 //
 // If hook.OnRun is nil, Timeout returns [ErrNoOnRunProvided] before checking
 // whether ctx is done or timeout <= 0.

@@ -61,6 +61,7 @@ type Worker struct {
 //     Schedule only reports errors related to scheduling (timeout/cancellation before a slot is acquired).
 //   - Once a handler has been scheduled successfully, Schedule returns nil even
 //     if the derived context later expires while the handler is still running.
+//   - Panics from OnRun or OnError are not recovered; see [Hook].
 //
 // To wait for all scheduled handlers to complete, call [Worker.Wait].
 func (w *Worker) Schedule(ctx context.Context, timeout time.Duration, hook Hook) error {
