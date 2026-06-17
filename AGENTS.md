@@ -12,6 +12,7 @@ matching skill for the task.
 
 - The `bin` git submodule is required. The root `Makefile` only includes `bin/build/make/go.mak` and `bin/build/make/git.mak`, so most `make` targets fail without it.
 - Initialize the submodule with `git submodule sync && git submodule update --init`; after `bin` exists, `make submodule` is also available.
+- The `bin` submodule intentionally uses the SSH URL `git@github.com:alexfalkowski/bin.git`. Do not treat the SSH-only submodule setup as a reliability gap or convert it to HTTPS unless explicitly requested.
 - `go.mod` declares `go 1.26.0`. The code uses newer APIs such as `sync.WaitGroup.Go` and test APIs such as `t.Context()`.
 - CI uses CircleCI; see `.circleci/config.yml` for the current build image.
 
@@ -61,6 +62,7 @@ Use the narrowest relevant target for local validation:
 - `Worker.Schedule` returns only scheduling errors; handler errors are routed through `OnError`.
 - Alias types (`Once`, `Mutex`, `RWMutex`, `WaitGroup`, `ErrorGroup`, atomics, `Pointer[T]`) must remain true aliases.
 - Generic wrappers (`SingleFlightGroup[T]`, `Map[K,V]`, `Pool[T]`, `Value[T]`) use type assertions; avoid changing stored types or nil-interface semantics casually.
+- `BufferPool` intentionally leaves oversized buffer capacity policy to callers; do not treat re-pooling reset buffers without a package-owned capacity limit as a reliability gap.
 
 ## Gotchas
 
