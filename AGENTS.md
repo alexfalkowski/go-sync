@@ -9,9 +9,12 @@ Use `bin/AGENTS.md` for shared skills and cross-repository defaults.
 ## Setup Notes
 
 - The `bin` git submodule is required. The root `Makefile` only includes `bin/build/make/go.mak` and `bin/build/make/git.mak`, so most `make` targets fail without it.
-- Initialize the submodule with `git submodule sync && git submodule update --init`; after `bin` exists, `make submodule` is also available.
-- `go.mod` declares `go 1.26.0`. The code uses newer APIs such as `sync.WaitGroup.Go` and test APIs such as `t.Context()`.
-- CI uses CircleCI; see `.circleci/config.yml` for the current build image.
+- Initialize the submodule before using shared Make targets. Use
+  `make submodule` once the shared `bin` checkout is present; see
+  `bin/AGENTS.md` for fresh-clone bootstrap details.
+- `go.mod` owns the current toolchain declaration. The code may use newer Go
+  APIs, so check `go.mod` before changing compatibility assumptions.
+- CI uses CircleCI; see `.circleci/config.yml` for the build environment.
 
 ## Layout
 
@@ -40,12 +43,11 @@ make codecov-upload
 
 Use the narrowest relevant target for local validation:
 
-- `make dep` runs `go mod download`, `go mod tidy`, and `go mod vendor`.
-- `make specs` runs tests through `gotestsum` with `-race`, vendored deps, JUnit, and coverage profile output.
-- If `gotestsum` is unavailable, `go test ./...` is the simplest fallback, but it is not equivalent to CI specs.
-- `make lint` runs field alignment and `golangci-lint` when installed.
-- `make fix-lint` applies configured golangci-lint fixes.
-- `make sec` runs `govulncheck -show verbose -test ./...`.
+- `make dep` refreshes dependencies and vendor state.
+- `make specs` runs the repository test target with reports and coverage input.
+- `make lint` runs repository linting.
+- `make fix-lint` applies configured lint fixes.
+- `make sec` runs repository security checks.
 - `make coverage` writes filtered coverage outputs under `test/reports/`.
 
 ## API Conventions
@@ -65,5 +67,5 @@ Use the narrowest relevant target for local validation:
 
 - Run `make dep` before validation or code changes unless the task is purely read-only.
 - Do not hand-edit generated reports, vendored code, or lockfile/vendor state unless dependency work requires it.
-- `make specs` and `go test ./...` are different; prefer the repo target when validating behavior.
+- Prefer `make specs` when validating behavior.
 - Only rely on optional tools (`gotestsum`, `golangci-lint`, `govulncheck`, `codecovcli`, etc.) when the target you run actually invokes them.
