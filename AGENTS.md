@@ -2,17 +2,14 @@
 
 This repo is `github.com/alexfalkowski/go-sync`, a small Go library whose package name is `sync`. It provides focused concurrency helpers: hook-based wait/timeout helpers, bounded worker scheduling, errgroup/singleflight helpers, typed pool/map/atomic wrappers, and convenience aliases for sync and atomic primitives.
 
-## Shared skills
+## Shared guidance
 
-This repository uses the shared skills from `bin/skills/`. Read
-`bin/AGENTS.md` for the canonical shared skill list and use the smallest
-matching skill for the task.
+Use `bin/AGENTS.md` for shared skills and cross-repository defaults.
 
 ## Setup Notes
 
 - The `bin` git submodule is required. The root `Makefile` only includes `bin/build/make/go.mak` and `bin/build/make/git.mak`, so most `make` targets fail without it.
 - Initialize the submodule with `git submodule sync && git submodule update --init`; after `bin` exists, `make submodule` is also available.
-- The `bin` submodule intentionally uses the SSH URL `git@github.com:alexfalkowski/bin.git`. Do not treat the SSH-only submodule setup as a reliability gap or convert it to HTTPS unless explicitly requested.
 - `go.mod` declares `go 1.26.0`. The code uses newer APIs such as `sync.WaitGroup.Go` and test APIs such as `t.Context()`.
 - CI uses CircleCI; see `.circleci/config.yml` for the current build image.
 
