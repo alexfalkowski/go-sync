@@ -42,7 +42,7 @@ The public API is intentionally small:
 - Aliases: `Once`, `Mutex`, `RWMutex`, `WaitGroup`, `Int32`, `Int64`, `Uint32`, `Uint64`, `Uintptr`, `Bool`, `Pointer[T]`
 - Hooks and timeout helpers: `Hook`, `Handler`, `ErrorHandler`, `ErrNoOnRunProvided`, `ErrTimeout`, `Wait`, `Timeout`, `IsTimeoutError`
 - Worker: `NewWorker`, `Worker.Schedule`, `Worker.Wait`
-- Groups: `ErrorGroup`, `ErrorsGroup`, `NewSingleFlightGroup`, `SingleFlightGroup`
+- Groups: `ErrorGroup`, `ErrorsGroup`, `NewSingleFlightGroup`, `SingleFlightGroup`, `SingleFlightResult`
 - Pools and wrappers: `NewPool`, `Pool[T]`, `NewBufferPool`, `BufferPool`, `NewValue`, `Value[T]`, `NewMap`, `Map[K, V]`
 
 Most wrappers preserve the semantics of the standard library type they wrap while making those semantics easier to use from generic code.
@@ -289,9 +289,11 @@ func main() {
 
 - Zero value is ready for use; `NewSingleFlightGroup[T]()` is optional and returns a ready-to-use pointer.
 - `Do(key, fn)` returns `(value, err, shared)`.
+- `DoChan(key, fn)` returns a receive-only channel of `SingleFlightResult[T]`.
 - `shared == true` means the result was given to multiple callers.
-- On `fn` error, `Do` returns zero `T` plus the error.
-- If `T` is an interface type and `fn` returns a nil interface value, `Do` exposes it as zero `T`.
+- On `fn` error, `Do` returns zero `T` plus the error, and `DoChan` sends a result with zero `T` plus the error.
+- If `T` is an interface type and `fn` returns a nil interface value, `Do` and `DoChan` expose it as zero `T`.
+- `DoChan` follows `singleflight.Group.DoChan`: the returned channel receives one buffered result and is not closed.
 - Completed results are not cached; `Forget` only affects a call that is still in flight.
 - Do not copy a `SingleFlightGroup[T]` after first use.
 

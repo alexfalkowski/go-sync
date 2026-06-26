@@ -90,6 +90,18 @@ func ExampleSingleFlightGroup() {
 	// Output: 42 true false
 }
 
+func ExampleSingleFlightGroup_DoChan() {
+	var g sync.SingleFlightGroup[int]
+
+	ch := g.DoChan("key", func() (int, error) {
+		return 42, nil
+	})
+	result := <-ch
+
+	fmt.Println(result.Value, result.Err == nil, result.Shared)
+	// Output: 42 true false
+}
+
 func ExampleBufferPool() {
 	pool := sync.NewBufferPool()
 	buffer := pool.Get()

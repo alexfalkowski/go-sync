@@ -118,22 +118,32 @@ func NewSingleFlightGroup[T any]() *SingleFlightGroup[T] {
 //
 // The zero value of SingleFlightGroup is ready for use.
 //
-// The type parameter T describes the value returned from [SingleFlightGroup.Do].
-// If the function returns a non-nil error, Do returns the zero value of T along
-// with that error.
+// The type parameter T describes the value returned from [SingleFlightGroup.Do]
+// and [SingleFlightGroup.DoChan]. If the function returns a non-nil error, both
+// methods expose the zero value of T along with that error.
 //
 // Implementation detail: the underlying singleflight implementation stores and
 // returns values as `any`, so this wrapper performs a type assertion back to T.
-// As long as the function passed to Do returns a value of type T, the assertion
-// will succeed.
+// As long as the function passed to Do or DoChan returns a value of type T, the
+// assertion will succeed.
 //
-// When T is an interface type and fn returns a nil interface value, Do exposes
-// that result as the zero value of T.
+// When T is an interface type and fn returns a nil interface value, Do and
+// DoChan expose that result as the zero value of T.
 //
 // A SingleFlightGroup must not be copied after first use.
 type SingleFlightGroup[T any] struct {
 	group singleflight.Group
-	zero  T
+}
+
+// SingleFlightResult holds the result returned by [SingleFlightGroup.DoChan].
+//
+// Value is the successful result of the function, or the zero value of T when
+// Err is non-nil. Shared reports whether the result was given to multiple
+// callers.
+type SingleFlightResult[T any] struct {
+	Value  T
+	Err    error
+	Shared bool
 }
 
 // Do executes fn for the given key, making sure that only one execution is in
@@ -153,17 +163,41 @@ func (g *SingleFlightGroup[T]) Do(key string, fn func() (T, error)) (T, error, b
 	v, err, shared := g.group.Do(key, func() (any, error) {
 		return fn()
 	})
-	if err != nil {
-		return g.zero, err, shared
+
+	result := g.typedResult(v, err, shared)
+	return result.Value, result.Err, result.Shared
+}
+
+// DoChan is like [SingleFlightGroup.Do] but returns a channel that receives the result.
+//
+// The returned channel is buffered with capacity 1 and is not closed, matching
+// [singleflight.Group.DoChan]. If fn returns a nil interface value and T is an
+// interface type, SingleFlightResult.Value is the zero value of T.
+func (g *SingleFlightGroup[T]) DoChan(key string, fn func() (T, error)) <-chan SingleFlightResult[T] {
+	ch := make(chan SingleFlightResult[T], 1)
+	result := g.group.DoChan(key, func() (any, error) {
+		return fn()
+	})
+
+	go func() {
+		r := <-result
+		ch <- g.typedResult(r.Val, r.Err, r.Shared)
+	}()
+
+	return ch
+}
+
+func (g *SingleFlightGroup[T]) typedResult(v any, err error, shared bool) SingleFlightResult[T] {
+	result := SingleFlightResult[T]{
+		Err:    err,
+		Shared: shared,
+	}
+	if err != nil || v == nil {
+		return result
 	}
 
-	// When T is an interface, fn may successfully return a nil interface value.
-	// singleflight stores that as an untyped nil, so avoid asserting nil to T.
-	if v == nil {
-		return g.zero, nil, shared
-	}
-
-	return v.(T), nil, shared
+	result.Value = v.(T)
+	return result
 }
 
 // Forget forgets an in-flight call for key.

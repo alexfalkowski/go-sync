@@ -147,6 +147,46 @@ func TestSingleFlightGroupNilInterfaceValue(t *testing.T) {
 	require.False(t, shared, "nil interface result should not be shared")
 }
 
+func TestSingleFlightGroupDoChan(t *testing.T) {
+	g := sync.NewSingleFlightGroup[string]()
+
+	ch := g.DoChan("test", func() (string, error) {
+		return "async", nil
+	})
+	result := <-ch
+
+	require.NoError(t, result.Err)
+	require.Equal(t, "async", result.Value)
+	require.False(t, result.Shared, "first DoChan result should not be shared")
+}
+
+func TestSingleFlightGroupDoChanError(t *testing.T) {
+	g := sync.NewSingleFlightGroup[string]()
+
+	ch := g.DoChan("test", func() (string, error) {
+		return "ignored", context.Canceled
+	})
+	result := <-ch
+
+	require.ErrorIs(t, result.Err, context.Canceled)
+	require.Empty(t, result.Value)
+	require.False(t, result.Shared, "errored DoChan result should not be shared")
+}
+
+func TestSingleFlightGroupDoChanNilInterfaceValue(t *testing.T) {
+	g := sync.NewSingleFlightGroup[io.Reader]()
+
+	ch := g.DoChan("test", func() (io.Reader, error) {
+		var r io.Reader
+		return r, nil
+	})
+	result := <-ch
+
+	require.NoError(t, result.Err)
+	require.Nil(t, result.Value)
+	require.False(t, result.Shared, "nil interface DoChan result should not be shared")
+}
+
 func TestSingleFlightGroupSharedResult(t *testing.T) {
 	synctest.Test(t, func(t *testing.T) {
 		g := sync.NewSingleFlightGroup[int]()
@@ -179,5 +219,39 @@ func TestSingleFlightGroupSharedResult(t *testing.T) {
 		require.EqualValues(t, 1, calls.Load(), "duplicate caller should not execute its function")
 		require.True(t, firstResult.Shared, "first caller should report a shared result")
 		require.True(t, second.Shared, "duplicate caller should report a shared result")
+	})
+}
+
+func TestSingleFlightGroupDoChanSharedResult(t *testing.T) {
+	synctest.Test(t, func(t *testing.T) {
+		g := sync.NewSingleFlightGroup[int]()
+		var calls sync.Int32
+		started := make(chan struct{})
+		release := make(chan struct{})
+
+		first := g.DoChan("test", func() (int, error) {
+			calls.Add(1)
+			close(started)
+			<-release
+			return 42, nil
+		})
+		<-started
+
+		second := g.DoChan("test", func() (int, error) {
+			calls.Add(1)
+			return 7, nil
+		})
+
+		close(release)
+		firstResult := <-first
+		secondResult := <-second
+
+		require.NoError(t, firstResult.Err)
+		require.NoError(t, secondResult.Err)
+		require.Equal(t, 42, firstResult.Value, "first DoChan caller should receive its result")
+		require.Equal(t, 42, secondResult.Value, "duplicate DoChan caller should receive shared result")
+		require.EqualValues(t, 1, calls.Load(), "duplicate DoChan caller should not execute its function")
+		require.True(t, firstResult.Shared, "first DoChan caller should report a shared result")
+		require.True(t, secondResult.Shared, "duplicate DoChan caller should report a shared result")
 	})
 }
