@@ -41,7 +41,7 @@ The public API is intentionally small:
 
 - Aliases: `Once`, `Mutex`, `RWMutex`, `WaitGroup`, `Int32`, `Int64`, `Uint32`, `Uint64`, `Uintptr`, `Bool`, `Pointer[T]`
 - Hooks and timeout helpers: `Hook`, `Handler`, `ErrorHandler`, `ErrNoOnRunProvided`, `ErrTimeout`, `Wait`, `Timeout`, `IsTimeoutError`
-- Worker: `NewWorker`, `Worker.Schedule`, `Worker.Wait`
+- Worker: `ErrWorkerFull`, `NewWorker`, `Worker.Schedule`, `Worker.TrySchedule`, `Worker.Wait`
 - Groups: `ErrorGroup`, `ErrorsGroup`, `NewSingleFlightGroup`, `SingleFlightGroup`, `SingleFlightResult`
 - Pools and wrappers: `NewPool`, `Pool[T]`, `NewBufferPool`, `BufferPool`, `NewValue`, `Value[T]`, `NewMap`, `Map[K, V]`
 
@@ -75,7 +75,7 @@ Most execution helpers accept a `sync.Hook`:
 How that returned error is observed depends on the helper:
 
 - `Wait` and `Timeout` return it only if `OnRun` finishes before their timeout/cancellation path wins.
-- `Worker` never returns handler errors from `Schedule`; use `OnError` for logging or side effects.
+- `Worker` never returns handler errors from `Schedule` or `TrySchedule`; use `OnError` for logging or side effects.
 
 ```go
 package main
@@ -176,17 +176,19 @@ func main() {
 - `NewWorker(count)` returns a ready-to-use pointer to a worker with at most `count` in-flight handlers.
 - Do not copy a `Worker` after first use; pass and store `*Worker` values.
 - `Schedule` blocks until a slot is acquired or timeout/cancel happens.
+- `TrySchedule` attempts to acquire a slot immediately and returns `sync.ErrWorkerFull` if capacity is unavailable.
 - The `timeout` budget starts when `Schedule` is called, so queue wait time and handler run time share the same deadline.
-- `Schedule` returns only scheduling errors (the derived context cause or `ErrNoOnRunProvided`).
+- `Schedule` and `TrySchedule` return only scheduling errors.
+- `Schedule` reports the derived context cause or `ErrNoOnRunProvided`; `TrySchedule` reports the input context cause, `ErrWorkerFull`, or `ErrNoOnRunProvided`.
 - If `timeout <= 0`, `Schedule` returns `sync.ErrTimeout` immediately and does not invoke `OnRun`.
-- Once a handler has been scheduled, `Schedule` returns `nil` even if that handler later observes `ctx.Done()`.
+- Once a handler has been scheduled, scheduling returns `nil` even if that handler later observes `ctx.Done()`.
 - `Wait` blocks until all successfully scheduled handlers complete.
-- If the input context is already canceled, `Schedule` returns the input context's cause immediately and does not schedule `OnRun`.
+- If the input context is already canceled, `Schedule` and `TrySchedule` return the input context's cause immediately and do not schedule `OnRun`.
 
 > [!NOTE]
-> `Schedule` reports scheduling errors only. Handler errors are routed through `Hook.OnError` and are not returned by `Schedule`.
+> Worker scheduling methods report scheduling errors only. Handler errors are routed through `Hook.OnError` and are not returned by `Schedule` or `TrySchedule`.
 
-If `count == 0`, scheduling always blocks until timeout/cancel.
+If `count == 0`, `Schedule` always blocks until timeout/cancel and `TrySchedule` returns `sync.ErrWorkerFull` immediately.
 
 ```go
 package main

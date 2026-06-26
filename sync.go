@@ -62,8 +62,8 @@ type ErrorHandler func(context.Context, error) error
 // calling helper:
 //   - [Wait] returns it only if OnRun finishes before timeout/cancellation wins.
 //   - [Timeout] returns it only if OnRun finishes before the derived context ends.
-//   - [Worker.Schedule] never returns it; handler errors are only observed via
-//     [Hook.OnError] side effects.
+//   - [Worker.Schedule] and [Worker.TrySchedule] never return it; handler errors
+//     are only observed via [Hook.OnError] side effects.
 type Hook struct {
 	OnRun   Handler
 	OnError ErrorHandler
