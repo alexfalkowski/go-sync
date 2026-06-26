@@ -88,10 +88,12 @@
 // Do not copy an ErrorsGroup after first use.
 //
 // SingleFlightGroup[T] is a generic wrapper around singleflight.Group. Its zero
-// value is ready for use. Do returns a typed result and preserves singleflight's
-// shared-result behavior. When T is an interface type and the function returns a
-// nil interface value, Do exposes that result as the zero value of T. Do not copy
-// a SingleFlightGroup[T] after first use.
+// value is ready for use. Do returns typed values directly, while DoChan returns
+// a channel of typed SingleFlightResult[T] values for select-based workflows.
+// Both methods preserve singleflight's shared-result behavior. When T is an
+// interface type and the function returns a nil interface value, they expose
+// that result as the zero value of T. Do not copy a SingleFlightGroup[T] after
+// first use.
 //
 // # Typed wrappers
 //
