@@ -20,8 +20,50 @@ func TestPoolPutNilDoesNotPoisonPool(t *testing.T) {
 	pool.Put(value)
 }
 
+func TestPoolZeroValue(t *testing.T) {
+	var pool sync.Pool[int]
+
+	value := pool.Get()
+	require.NotNil(t, value)
+	require.Equal(t, 0, *value, "zero-value pool should allocate zero value")
+
+	*value = 1
+	pool.Put(value)
+}
+
+func TestPoolNew(t *testing.T) {
+	type item struct {
+		values []string
+	}
+
+	pool := sync.Pool[item]{
+		New: func() *item {
+			return &item{values: make([]string, 0, 2)}
+		},
+	}
+
+	value := pool.Get()
+	require.NotNil(t, value)
+	require.NotNil(t, value.values)
+	require.Empty(t, value.values, "custom constructor should initialize slice length")
+	require.Equal(t, 2, cap(value.values), "custom constructor should initialize slice capacity")
+}
+
+func TestPoolNilNewAllocatesZeroValue(t *testing.T) {
+	pool := sync.Pool[int]{
+		New: nil,
+	}
+
+	value := pool.Get()
+	require.NotNil(t, value)
+	require.Equal(t, 0, *value, "nil constructor should allocate zero value")
+}
+
 func TestNewPoolDirectCall(t *testing.T) {
-	value := sync.NewPool[int]().Get()
+	pool := sync.NewPool[int]()
+	require.NotNil(t, pool.New, "NewPool should install the default constructor")
+
+	value := pool.Get()
 	require.NotNil(t, value)
 	require.Equal(t, 0, *value, "pool should allocate zero value")
 }

@@ -99,8 +99,9 @@
 //
 // # Typed wrappers
 //
-// Pool[T] is a typed wrapper around sync.Pool. Its zero value is not ready for use;
-// construct one with NewPool[T].
+// Pool[T] is a typed wrapper around sync.Pool. Its zero value is ready for use.
+// NewPool[T] returns a pointer with the default new(T) constructor. Set Pool.New
+// when pooled values need custom initialization.
 //
 // BufferPool is a convenience wrapper over Pool[bytes.Buffer]. Its zero value is
 // also not ready for use; construct one with NewBufferPool.

@@ -4,28 +4,29 @@ import "sync"
 
 // NewPool returns a pointer to an initialized [Pool] for values of type T.
 //
-// The pool creates new values on demand by allocating `new(T)` when empty.
+// The returned pool creates new values on demand by allocating `new(T)` when empty.
 //
 // Note: the returned Pool stores *T values. Callers should treat values obtained
 // from [Pool.Get] as temporarily borrowed and return them to the pool with
 // [Pool.Put] when finished.
 func NewPool[T any]() *Pool[T] {
-	pool := &sync.Pool{
-		New: func() any {
+	return &Pool[T]{
+		New: func() *T {
 			return new(T)
 		},
 	}
-	return &Pool[T]{pool: pool}
 }
 
 // Pool is a typed wrapper around [sync.Pool].
 //
 // It stores and returns pointers to T (*T) to avoid copying large values.
-// Pool does not reset values automatically on Put.
+// Pool does not reset values automatically on Put. If New is non-nil, Get calls
+// it to create a value when the pool is empty. If New is nil, Get allocates
+// new(T) when the pool is empty.
 //
 // # Zero value
 //
-// The zero value is not ready for use. Construct a Pool with [NewPool].
+// The zero value is ready for use.
 //
 // # Semantics
 //
@@ -39,15 +40,26 @@ func NewPool[T any]() *Pool[T] {
 //
 // Callers are responsible for resetting any state on values before reusing them,
 // if needed.
+//
+// A Pool must not be copied after first use.
 type Pool[T any] struct {
-	pool *sync.Pool
+	New  func() *T
+	pool sync.Pool
 }
 
 // Get returns a pointer to a T from the pool.
 //
 // The returned pointer is owned by the caller until it is returned via [Pool.Put].
+// If New is set and returns nil, Get returns nil.
 func (p *Pool[T]) Get() *T {
-	return p.pool.Get().(*T)
+	value := p.pool.Get()
+	if value != nil {
+		return value.(*T)
+	}
+	if p.New != nil {
+		return p.New()
+	}
+	return new(T)
 }
 
 // Put returns b to the pool.

@@ -138,7 +138,7 @@ func ExamplePool() {
 		id int
 	}
 
-	pool := sync.NewPool[item]()
+	var pool sync.Pool[item]
 	v := pool.Get()
 	v.id = 10
 	pool.Put(v)
@@ -147,6 +147,23 @@ func ExamplePool() {
 	fmt.Println(v2 != nil)
 	pool.Put(v2)
 	// Output: true
+}
+
+func ExamplePool_customNew() {
+	type item struct {
+		values []string
+	}
+
+	pool := sync.Pool[item]{
+		New: func() *item {
+			return &item{values: make([]string, 0, 2)}
+		},
+	}
+
+	v := pool.Get()
+	fmt.Println(v.values == nil, cap(v.values))
+	pool.Put(v)
+	// Output: false 2
 }
 
 func ExampleValue() {
