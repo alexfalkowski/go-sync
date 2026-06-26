@@ -2,15 +2,19 @@ package sync
 
 import (
 	"context"
+	"errors"
 	"sync"
 	"time"
 )
 
+// ErrWorkerFull is returned by [Worker.TrySchedule] when no concurrency slot is available immediately.
+var ErrWorkerFull = errors.New("worker has no available slot")
+
 // NewWorker returns a pointer to a [Worker] that bounds concurrent execution to count.
 //
 // The worker uses a buffered channel of size count as a semaphore. A call to
-// [Worker.Schedule] acquires one slot before starting work and releases it when
-// the work completes.
+// [Worker.Schedule] or [Worker.TrySchedule] acquires one slot before starting
+// work and releases it when the work completes.
 //
 // If count is 0, scheduling will always block until the provided context times
 // out or is canceled (because the semaphore has no capacity).
@@ -24,8 +28,9 @@ func NewWorker(count uint) *Worker {
 
 // Worker schedules handlers with a bounded level of concurrency.
 //
-// Work is scheduled via [Worker.Schedule] and completion is observed via
-// [Worker.Wait]. Scheduled handlers run asynchronously in their own goroutines.
+// Work is scheduled via [Worker.Schedule] or [Worker.TrySchedule], and
+// completion is observed via [Worker.Wait]. Scheduled handlers run
+// asynchronously in their own goroutines.
 //
 // The zero value is not ready for use.
 // A Worker must not be copied after first use; pass and store *Worker values.
@@ -102,10 +107,64 @@ func (w *Worker) Schedule(ctx context.Context, timeout time.Duration, hook Hook)
 	return nil
 }
 
+// TrySchedule attempts to schedule hook.OnRun immediately.
+//
+// If a concurrency slot is available, TrySchedule starts OnRun in a goroutine
+// and returns nil. The context passed to OnRun is the ctx provided to
+// TrySchedule. This context is also passed to hook.OnError (via hook.Error) if
+// OnRun returns a non-nil error.
+//
+// TrySchedule does not wait for capacity. If no concurrency slot is available
+// immediately, it returns [ErrWorkerFull] without scheduling OnRun.
+//
+// Error handling semantics:
+//
+//   - If hook.OnRun is nil, TrySchedule returns [ErrNoOnRunProvided].
+//     This validation happens before context or capacity shortcut checks.
+//   - If the input context is already done on entry, TrySchedule returns its
+//     cancellation cause without scheduling OnRun.
+//   - Errors returned from OnRun are routed to hook.OnError (if set) and are
+//     not returned from TrySchedule. TrySchedule only reports scheduling errors.
+//   - Once a handler has been scheduled successfully, TrySchedule returns nil
+//     even if the context is later canceled while the handler is still running.
+//   - Panics from OnRun or OnError are not recovered; see [Hook].
+//
+// To wait for all scheduled handlers to complete, call [Worker.Wait].
+func (w *Worker) TrySchedule(ctx context.Context, hook Hook) error {
+	if hook.OnRun == nil {
+		return ErrNoOnRunProvided
+	}
+	if ctx.Err() != nil {
+		return context.Cause(ctx)
+	}
+
+	select {
+	case w.requests <- struct{}{}:
+		if ctx.Err() != nil {
+			<-w.requests
+			return context.Cause(ctx)
+		}
+
+		w.wg.Go(func() {
+			defer func() {
+				<-w.requests
+			}()
+
+			_ = hook.Error(ctx, hook.OnRun(ctx))
+		})
+
+		return nil
+	case <-ctx.Done():
+		return context.Cause(ctx)
+	default:
+		return ErrWorkerFull
+	}
+}
+
 // Wait blocks until all handlers that have been successfully scheduled have completed.
 //
 // It does not cancel running handlers. Cancellation is controlled by the contexts
-// provided to [Worker.Schedule] and observed by the handlers themselves.
+// provided to [Worker.Schedule] or [Worker.TrySchedule] and observed by the handlers themselves.
 // Wait can be called multiple times; each call waits for the currently scheduled
 // work to finish.
 func (w *Worker) Wait() {

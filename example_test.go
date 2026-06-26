@@ -55,6 +55,26 @@ func ExampleWorker() {
 	// Output: 3
 }
 
+func ExampleWorker_TrySchedule() {
+	worker := sync.NewWorker(1)
+	var count sync.Int32
+
+	err := worker.TrySchedule(context.Background(), sync.Hook{
+		OnRun: func(context.Context) error {
+			count.Add(1)
+			return nil
+		},
+	})
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+
+	worker.Wait()
+	fmt.Println(count.Load())
+	// Output: 1
+}
+
 func ExampleErrorGroup() {
 	var g sync.ErrorGroup
 

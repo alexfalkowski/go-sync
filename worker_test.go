@@ -36,6 +36,110 @@ func TestNewWorkerDirectCall(t *testing.T) {
 	require.ErrorIs(t, sync.NewWorker(1).Schedule(t.Context(), time.Second, sync.Hook{}), sync.ErrNoOnRunProvided)
 }
 
+func TestWorkerTrySchedule(t *testing.T) {
+	worker := sync.NewWorker(1)
+	var called sync.Bool
+
+	err := worker.TrySchedule(t.Context(), sync.Hook{
+		OnRun: func(context.Context) error {
+			called.Store(true)
+			return nil
+		},
+	})
+	require.NoError(t, err)
+
+	worker.Wait()
+	require.True(t, called.Load())
+}
+
+func TestWorkerTryScheduleFullDoesNotRun(t *testing.T) {
+	worker := sync.NewWorker(1)
+	started := make(chan struct{})
+	release := make(chan struct{})
+
+	err := worker.TrySchedule(t.Context(), sync.Hook{
+		OnRun: func(context.Context) error {
+			close(started)
+			<-release
+			return nil
+		},
+	})
+	require.NoError(t, err)
+	<-started
+
+	var called sync.Bool
+	err = worker.TrySchedule(t.Context(), sync.Hook{
+		OnRun: func(context.Context) error {
+			called.Store(true)
+			return nil
+		},
+	})
+
+	require.ErrorIs(t, err, sync.ErrWorkerFull)
+	require.False(t, called.Load(), "TrySchedule should not run hook when worker has no free slot")
+
+	close(release)
+	worker.Wait()
+}
+
+func TestWorkerTryScheduleZeroCapacityDoesNotRun(t *testing.T) {
+	worker := sync.NewWorker(0)
+	var called sync.Bool
+
+	err := worker.TrySchedule(t.Context(), sync.Hook{
+		OnRun: func(context.Context) error {
+			called.Store(true)
+			return nil
+		},
+	})
+
+	require.ErrorIs(t, err, sync.ErrWorkerFull)
+	worker.Wait()
+	require.False(t, called.Load(), "zero-capacity worker should not run hook")
+}
+
+func TestWorkerTryScheduleError(t *testing.T) {
+	worker := sync.NewWorker(1)
+	runErr := errors.New("run failed")
+	handled := make(chan error, 1)
+
+	require.ErrorIs(t, worker.TrySchedule(t.Context(), sync.Hook{}), sync.ErrNoOnRunProvided)
+
+	err := worker.TrySchedule(t.Context(), sync.Hook{
+		OnRun: func(context.Context) error {
+			return runErr
+		},
+		OnError: func(_ context.Context, err error) error {
+			handled <- err
+			return errors.New("wrapped run failed")
+		},
+	})
+	require.NoError(t, err)
+
+	worker.Wait()
+	require.ErrorIs(t, <-handled, runErr)
+}
+
+func TestWorkerTryScheduleContextAlreadyCanceledDoesNotRun(t *testing.T) {
+	worker := sync.NewWorker(1)
+
+	ctx, cancel := context.WithCancelCause(t.Context())
+	expected := errors.New("parent canceled")
+	cancel(expected)
+
+	var called sync.Bool
+	err := worker.TrySchedule(ctx, sync.Hook{
+		OnRun: func(context.Context) error {
+			called.Store(true)
+			return nil
+		},
+	})
+
+	require.ErrorIs(t, err, expected)
+	worker.Wait()
+	require.False(t, called.Load(), "TrySchedule should not run hook when context is already canceled")
+}
+
 func TestWorkerScheduleTimeout(t *testing.T) {
 	synctest.Test(t, func(t *testing.T) {
 		worker := sync.NewWorker(1)
