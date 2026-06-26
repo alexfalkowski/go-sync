@@ -325,10 +325,13 @@ func main() {
 `Pool[T]` is a typed wrapper around [`sync.Pool`](https://pkg.go.dev/sync#Pool).
 
 - Stores `*T` values.
-- Zero value is not ready; use `NewPool[T]()` which returns a ready-to-use pointer.
+- Zero value is ready for use.
+- `NewPool[T]()` returns a ready-to-use pointer with the default `new(T)` constructor.
+- Set `New func() *T` when values need custom initialization.
 - Follows normal `sync.Pool` semantics (runtime may drop entries anytime).
 - Does not reset values automatically on `Put`; callers are responsible for reuse hygiene.
 - `Put(nil)` is a no-op.
+- Do not copy a `Pool[T]` after first use.
 
 ```go
 package main
@@ -344,9 +347,12 @@ func main() {
         ID int
     }
 
-    pool := sync.NewPool[item]()
+    pool := sync.Pool[item]{
+        New: func() *item {
+            return &item{ID: 10}
+        },
+    }
     it := pool.Get()
-    it.ID = 10
     pool.Put(it)
 
     fmt.Println("ok")
