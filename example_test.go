@@ -21,6 +21,19 @@ func ExampleWait() {
 	// Output: true
 }
 
+func ExampleHook_Error() {
+	runErr := errors.New("boom")
+	hook := sync.Hook{
+		OnError: func(_ context.Context, err error) error {
+			return fmt.Errorf("wrapped: %w", err)
+		},
+	}
+
+	err := hook.Error(context.Background(), runErr)
+	fmt.Println(errors.Is(err, runErr))
+	// Output: true
+}
+
 func ExampleTimeout() {
 	err := sync.Timeout(context.Background(), 10*time.Millisecond, sync.Hook{
 		OnRun: func(ctx context.Context) error {
@@ -149,7 +162,7 @@ func ExamplePool() {
 	// Output: true
 }
 
-func ExamplePool_customNew() {
+func ExamplePool_Get() {
 	type item struct {
 		values []string
 	}
@@ -186,19 +199,20 @@ func ExampleMap() {
 	// Output: 1 true
 }
 
-func ExampleMap_nilInterfaceValue() {
-	var m sync.Map[string, io.Reader]
+func ExampleMap_Range() {
+	var m sync.Map[fmt.Stringer, io.Reader]
+	var key fmt.Stringer
 	var r io.Reader
-	m.Store("reader", r)
+	m.Store(key, r)
 
-	m.Range(func(_ string, value io.Reader) bool {
-		fmt.Println(value == nil)
+	m.Range(func(key fmt.Stringer, value io.Reader) bool {
+		fmt.Println(key == nil, value == nil)
 		return true
 	})
-	// Output: true
+	// Output: true true
 }
 
-func ExampleBufferPool_Copy_nil() {
+func ExampleBufferPool_Copy() {
 	pool := sync.NewBufferPool()
 	fmt.Println(pool.Copy(nil) == nil)
 	// Output: true

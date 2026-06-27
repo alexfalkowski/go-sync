@@ -87,6 +87,8 @@
 // Wait returns all non-nil errors joined with errors.Join in the order the
 // functions were passed to Go. ErrorsGroup retains recorded errors for its
 // lifetime, so use a fresh ErrorsGroup for each independent batch of work.
+// Start the first function before calling Wait for an empty group, and wait for
+// a batch to finish before starting the next independent batch.
 // Do not copy an ErrorsGroup after first use.
 //
 // SingleFlightGroup[T] is a generic wrapper around singleflight.Group. Its zero
@@ -101,10 +103,11 @@
 //
 // Pool[T] is a typed wrapper around sync.Pool. Its zero value is ready for use.
 // NewPool[T] returns a pointer with the default new(T) constructor. Set Pool.New
-// when pooled values need custom initialization.
+// when pooled values need custom initialization; if Pool.New is nil, Get
+// allocates new(T) when the pool is empty.
 //
-// BufferPool is a convenience wrapper over Pool[bytes.Buffer]. Its zero value is
-// also not ready for use; construct one with NewBufferPool.
+// BufferPool is a convenience wrapper over Pool[bytes.Buffer]. Unlike Pool[T],
+// its zero value is not ready for use; construct one with NewBufferPool.
 //
 // Value[T] is a typed wrapper around atomic.Value. Its zero value is ready for use.
 // Load and Swap return the zero value of T if no value has been stored yet. When

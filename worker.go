@@ -16,8 +16,9 @@ var ErrWorkerFull = errors.New("worker has no available slot")
 // [Worker.Schedule] or [Worker.TrySchedule] acquires one slot before starting
 // work and releases it when the work completes.
 //
-// If count is 0, scheduling will always block until the provided context times
-// out or is canceled (because the semaphore has no capacity).
+// If count is 0, [Worker.Schedule] always blocks until the provided context
+// times out or is canceled, and [Worker.TrySchedule] returns [ErrWorkerFull]
+// immediately.
 //
 // The zero value of [Worker] is not ready for use; construct one with NewWorker.
 func NewWorker(count uint) *Worker {
