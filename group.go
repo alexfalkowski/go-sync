@@ -202,8 +202,9 @@ func (g *SingleFlightGroup[T]) typedResult(v any, err error, shared bool) Single
 
 // Forget forgets an in-flight call for key.
 //
-// Future calls to [SingleFlightGroup.Do] with the same key will invoke their
-// function rather than waiting for the earlier call to complete.
+// Future calls to [SingleFlightGroup.Do] or [SingleFlightGroup.DoChan] with the
+// same key will invoke their function rather than waiting for the earlier call
+// to complete. Forget does not cancel or stop the forgotten in-flight call.
 func (g *SingleFlightGroup[T]) Forget(key string) {
 	g.group.Forget(key)
 }

@@ -89,16 +89,18 @@ import (
 )
 
 func main() {
+    runErr := errors.New("boom")
     hook := sync.Hook{
         OnRun: func(context.Context) error {
-            return errors.New("boom")
+            return runErr
         },
         OnError: func(_ context.Context, err error) error {
             return fmt.Errorf("wrapped: %w", err)
         },
     }
 
-    _ = hook
+    err := hook.Error(context.Background(), hook.OnRun(context.Background()))
+    fmt.Println(errors.Is(err, runErr))
 }
 ```
 
@@ -259,6 +261,8 @@ Use `ErrorsGroup` when callers need every error rather than only the first one:
 for each independent batch of work.
 Functions passed to `ErrorsGroup.Go` must not panic; panics are not joined into
 the error returned by `Wait`.
+Start the first function before calling `Wait` for an empty group, and wait for
+a batch to finish before starting the next independent batch.
 Do not copy an `ErrorsGroup` after first use.
 
 ```go
@@ -328,6 +332,7 @@ func main() {
 - Zero value is ready for use.
 - `NewPool[T]()` returns a ready-to-use pointer with the default `new(T)` constructor.
 - Set `New func() *T` when values need custom initialization.
+- When `New` is nil, `Get` allocates `new(T)` when the pool is empty.
 - Follows normal `sync.Pool` semantics (runtime may drop entries anytime).
 - Does not reset values automatically on `Put`; callers are responsible for reuse hygiene.
 - `Put(nil)` is a no-op.
