@@ -11,6 +11,8 @@ import (
 )
 
 func TestMapLoadOrStore(t *testing.T) {
+	t.Parallel()
+
 	m := sync.NewMap[string, string]()
 	defer m.Clear()
 
@@ -24,12 +26,16 @@ func TestMapLoadOrStore(t *testing.T) {
 }
 
 func TestNewMapDirectCall(t *testing.T) {
+	t.Parallel()
+
 	v, ok := sync.NewMap[string, string]().Load("test")
 	require.Empty(t, v)
 	require.False(t, ok, "new map should not contain key")
 }
 
 func TestMapLoad(t *testing.T) {
+	t.Parallel()
+
 	m := sync.NewMap[string, string]()
 	defer m.Clear()
 
@@ -45,6 +51,8 @@ func TestMapLoad(t *testing.T) {
 }
 
 func TestMapLoadAndDelete(t *testing.T) {
+	t.Parallel()
+
 	m := sync.NewMap[string, string]()
 	defer m.Clear()
 
@@ -60,6 +68,8 @@ func TestMapLoadAndDelete(t *testing.T) {
 }
 
 func TestMapDelete(t *testing.T) {
+	t.Parallel()
+
 	m := sync.NewMap[string, string]()
 	defer m.Clear()
 
@@ -72,6 +82,8 @@ func TestMapDelete(t *testing.T) {
 }
 
 func TestMapSwap(t *testing.T) {
+	t.Parallel()
+
 	m := sync.NewMap[string, string]()
 	defer m.Clear()
 
@@ -87,6 +99,8 @@ func TestMapSwap(t *testing.T) {
 }
 
 func TestMapCompare(t *testing.T) {
+	t.Parallel()
+
 	m := sync.NewMap[string, string]()
 	defer m.Clear()
 
@@ -107,6 +121,8 @@ func TestMapCompare(t *testing.T) {
 }
 
 func TestMapComparePanicsWithNonComparableValues(t *testing.T) {
+	t.Parallel()
+
 	m := sync.NewMap[string, any]()
 	defer m.Clear()
 
@@ -122,6 +138,8 @@ func TestMapComparePanicsWithNonComparableValues(t *testing.T) {
 }
 
 func TestMapRange(t *testing.T) {
+	t.Parallel()
+
 	m := sync.NewMap[string, string]()
 	defer m.Clear()
 
@@ -135,6 +153,8 @@ func TestMapRange(t *testing.T) {
 }
 
 func TestMapLoadOrStoreNilInterfaceValue(t *testing.T) {
+	t.Parallel()
+
 	m := sync.NewMap[string, io.Reader]()
 	defer m.Clear()
 
@@ -149,6 +169,8 @@ func TestMapLoadOrStoreNilInterfaceValue(t *testing.T) {
 }
 
 func TestMapLoadNilInterfaceValue(t *testing.T) {
+	t.Parallel()
+
 	m := sync.NewMap[string, io.Reader]()
 	defer m.Clear()
 
@@ -161,6 +183,8 @@ func TestMapLoadNilInterfaceValue(t *testing.T) {
 }
 
 func TestMapLoadAndDeleteNilInterfaceValue(t *testing.T) {
+	t.Parallel()
+
 	m := sync.NewMap[string, io.Reader]()
 	defer m.Clear()
 
@@ -177,6 +201,8 @@ func TestMapLoadAndDeleteNilInterfaceValue(t *testing.T) {
 }
 
 func TestMapSwapNilInterfaceValue(t *testing.T) {
+	t.Parallel()
+
 	m := sync.NewMap[string, io.Reader]()
 	defer m.Clear()
 
@@ -189,6 +215,8 @@ func TestMapSwapNilInterfaceValue(t *testing.T) {
 }
 
 func TestMapRangeNilInterfaceValue(t *testing.T) {
+	t.Parallel()
+
 	m := sync.NewMap[string, io.Reader]()
 	defer m.Clear()
 
@@ -208,6 +236,8 @@ func TestMapRangeNilInterfaceValue(t *testing.T) {
 }
 
 func TestMapRangeNilInterfaceKey(t *testing.T) {
+	t.Parallel()
+
 	m := sync.NewMap[fmt.Stringer, string]()
 	defer m.Clear()
 

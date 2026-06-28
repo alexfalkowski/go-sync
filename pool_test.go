@@ -8,6 +8,8 @@ import (
 )
 
 func TestPoolPutNilDoesNotPoisonPool(t *testing.T) {
+	t.Parallel()
+
 	pool := sync.NewPool[int]()
 
 	require.NotPanics(t, func() {
@@ -21,6 +23,8 @@ func TestPoolPutNilDoesNotPoisonPool(t *testing.T) {
 }
 
 func TestPoolZeroValue(t *testing.T) {
+	t.Parallel()
+
 	var pool sync.Pool[int]
 
 	value := pool.Get()
@@ -32,6 +36,8 @@ func TestPoolZeroValue(t *testing.T) {
 }
 
 func TestPoolNew(t *testing.T) {
+	t.Parallel()
+
 	type item struct {
 		values []string
 	}
@@ -50,6 +56,8 @@ func TestPoolNew(t *testing.T) {
 }
 
 func TestPoolNilNewAllocatesZeroValue(t *testing.T) {
+	t.Parallel()
+
 	pool := sync.Pool[int]{
 		New: nil,
 	}
@@ -60,6 +68,8 @@ func TestPoolNilNewAllocatesZeroValue(t *testing.T) {
 }
 
 func TestNewPoolDirectCall(t *testing.T) {
+	t.Parallel()
+
 	pool := sync.NewPool[int]()
 	require.NotNil(t, pool.New, "NewPool should install the default constructor")
 

@@ -8,6 +8,8 @@ import (
 )
 
 func TestValue(t *testing.T) {
+	t.Parallel()
+
 	value := sync.NewValue[int]()
 
 	require.Equal(t, 0, value.Load(), "new Value should load zero value")
@@ -21,10 +23,14 @@ func TestValue(t *testing.T) {
 }
 
 func TestNewValueDirectCall(t *testing.T) {
+	t.Parallel()
+
 	require.Equal(t, 0, sync.NewValue[int]().Load(), "new Value should load zero value")
 }
 
 func TestValueCompareAndSwapPanicsWithNonComparableValues(t *testing.T) {
+	t.Parallel()
+
 	value := sync.NewValue[any]()
 	value.Store([]int{1})
 

@@ -50,6 +50,8 @@ func TestWaitContinue(t *testing.T) {
 }
 
 func TestWaitNonPositiveTimeoutDoesNotRun(t *testing.T) {
+	t.Parallel()
+
 	var called sync.Bool
 
 	require.NoError(t, sync.Wait(t.Context(), 0, sync.Hook{
@@ -62,6 +64,8 @@ func TestWaitNonPositiveTimeoutDoesNotRun(t *testing.T) {
 }
 
 func TestWaitContextCancel(t *testing.T) {
+	t.Parallel()
+
 	ctx, cancel := context.WithCancel(t.Context())
 	cancel()
 
@@ -73,6 +77,8 @@ func TestWaitContextCancel(t *testing.T) {
 }
 
 func TestWaitContextAlreadyCanceledDoesNotRun(t *testing.T) {
+	t.Parallel()
+
 	ctx, cancel := context.WithCancel(t.Context())
 	cancel()
 
@@ -135,6 +141,8 @@ func TestTimeoutNoError(t *testing.T) {
 }
 
 func TestTimeoutNonPositiveTimeoutDoesNotRun(t *testing.T) {
+	t.Parallel()
+
 	var called sync.Bool
 
 	err := sync.Timeout(t.Context(), 0, sync.Hook{
@@ -166,10 +174,14 @@ func TestTimeoutError(t *testing.T) {
 }
 
 func TestHookError(t *testing.T) {
+	t.Parallel()
+
 	runErr := errors.New("run failed")
 	handledErr := errors.New("handled run failed")
 
 	t.Run("nil error", func(t *testing.T) {
+		t.Parallel()
+
 		called := false
 		hook := sync.Hook{
 			OnError: func(context.Context, error) error {
@@ -182,11 +194,15 @@ func TestHookError(t *testing.T) {
 	})
 
 	t.Run("without error handler", func(t *testing.T) {
+		t.Parallel()
+
 		hook := sync.Hook{}
 		require.ErrorIs(t, hook.Error(t.Context(), runErr), runErr)
 	})
 
 	t.Run("with error handler", func(t *testing.T) {
+		t.Parallel()
+
 		type contextKey struct{}
 		ctx := context.WithValue(t.Context(), contextKey{}, "marker")
 		hook := sync.Hook{
@@ -202,6 +218,8 @@ func TestHookError(t *testing.T) {
 }
 
 func TestIsTimeoutError(t *testing.T) {
+	t.Parallel()
+
 	tests := map[string]struct {
 		err         error
 		wantTimeout bool
@@ -230,6 +248,8 @@ func TestIsTimeoutError(t *testing.T) {
 
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
+			t.Parallel()
+
 			require.Equal(t, test.wantTimeout, sync.IsTimeoutError(test.err))
 		})
 	}
@@ -335,6 +355,8 @@ func TestTimeoutReturnsParentCauseWhenContextCanceledAfterRun(t *testing.T) {
 }
 
 func TestTimeoutContextAlreadyCanceledDoesNotRun(t *testing.T) {
+	t.Parallel()
+
 	ctx, cancel := context.WithCancel(t.Context())
 	cancel()
 
@@ -351,6 +373,8 @@ func TestTimeoutContextAlreadyCanceledDoesNotRun(t *testing.T) {
 }
 
 func TestTimeoutReturnsContextCause(t *testing.T) {
+	t.Parallel()
+
 	ctx, cancel := context.WithCancelCause(t.Context())
 	expected := errors.New("parent canceled")
 	cancel(expected)

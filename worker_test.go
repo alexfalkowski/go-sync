@@ -33,6 +33,8 @@ func TestWorkerSchedule(t *testing.T) {
 }
 
 func TestNewWorkerDirectCall(t *testing.T) {
+	t.Parallel()
+
 	require.ErrorIs(t, sync.NewWorker(1).Schedule(t.Context(), time.Second, sync.Hook{}), sync.ErrNoOnRunProvided)
 }
 
@@ -83,6 +85,8 @@ func TestWorkerTryScheduleFullDoesNotRun(t *testing.T) {
 }
 
 func TestWorkerTryScheduleZeroCapacityDoesNotRun(t *testing.T) {
+	t.Parallel()
+
 	worker := sync.NewWorker(0)
 	var called sync.Bool
 
@@ -121,6 +125,8 @@ func TestWorkerTryScheduleError(t *testing.T) {
 }
 
 func TestWorkerTryScheduleContextAlreadyCanceledDoesNotRun(t *testing.T) {
+	t.Parallel()
+
 	worker := sync.NewWorker(1)
 
 	ctx, cancel := context.WithCancelCause(t.Context())
@@ -171,6 +177,8 @@ func TestWorkerScheduleTimeout(t *testing.T) {
 }
 
 func TestWorkerScheduleNonPositiveTimeoutDoesNotRun(t *testing.T) {
+	t.Parallel()
+
 	worker := sync.NewWorker(1)
 	var called sync.Bool
 
@@ -267,6 +275,8 @@ func TestWorkerScheduleNotCanceledImmediately(t *testing.T) {
 }
 
 func TestWorkerScheduleContextAlreadyCanceledDoesNotRun(t *testing.T) {
+	t.Parallel()
+
 	worker := sync.NewWorker(1)
 
 	ctx, cancel := context.WithCancel(t.Context())
@@ -286,6 +296,8 @@ func TestWorkerScheduleContextAlreadyCanceledDoesNotRun(t *testing.T) {
 }
 
 func TestWorkerScheduleReturnsContextCause(t *testing.T) {
+	t.Parallel()
+
 	worker := sync.NewWorker(1)
 
 	ctx, cancel := context.WithCancelCause(t.Context())

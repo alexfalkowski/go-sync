@@ -8,6 +8,8 @@ import (
 )
 
 func TestBufferPool(t *testing.T) {
+	t.Parallel()
+
 	pool := sync.NewBufferPool()
 	buffer := pool.Get()
 	defer pool.Put(buffer)
@@ -19,10 +21,14 @@ func TestBufferPool(t *testing.T) {
 }
 
 func TestNewBufferPoolDirectCall(t *testing.T) {
+	t.Parallel()
+
 	require.Nil(t, sync.NewBufferPool().Copy(nil))
 }
 
 func TestBufferPoolPutResetsBuffer(t *testing.T) {
+	t.Parallel()
+
 	pool := sync.NewBufferPool()
 	buffer := pool.Get()
 	buffer.WriteString("hello")
@@ -33,6 +39,8 @@ func TestBufferPoolPutResetsBuffer(t *testing.T) {
 }
 
 func TestBufferPoolCopyDoesNotAliasBuffer(t *testing.T) {
+	t.Parallel()
+
 	pool := sync.NewBufferPool()
 	buffer := pool.Get()
 	defer pool.Put(buffer)
