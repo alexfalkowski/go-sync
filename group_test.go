@@ -46,6 +46,8 @@ func TestErrorsGroupWaitJoinsErrorsInGoCallOrder(t *testing.T) {
 }
 
 func TestSingleFlightGroup(t *testing.T) {
+	t.Parallel()
+
 	g := sync.NewSingleFlightGroup[string]()
 
 	v, err, shared := g.Do("test1", func() (string, error) {
@@ -66,6 +68,8 @@ func TestSingleFlightGroup(t *testing.T) {
 }
 
 func TestSingleFlightGroupZeroValue(t *testing.T) {
+	t.Parallel()
+
 	var g sync.SingleFlightGroup[string]
 
 	v, err, shared := g.Do("test", func() (string, error) {
@@ -78,6 +82,8 @@ func TestSingleFlightGroupZeroValue(t *testing.T) {
 }
 
 func TestSingleFlightGroupDoesNotCacheCompletedResults(t *testing.T) {
+	t.Parallel()
+
 	g := sync.NewSingleFlightGroup[int]()
 	var calls sync.Int32
 
@@ -125,6 +131,8 @@ func TestSingleFlightGroupForgetInFlight(t *testing.T) {
 }
 
 func TestNewSingleFlightGroupDirectCall(t *testing.T) {
+	t.Parallel()
+
 	v, err, shared := sync.NewSingleFlightGroup[int]().Do("test", func() (int, error) {
 		return 42, nil
 	})
@@ -135,6 +143,8 @@ func TestNewSingleFlightGroupDirectCall(t *testing.T) {
 }
 
 func TestSingleFlightGroupNilInterfaceValue(t *testing.T) {
+	t.Parallel()
+
 	g := sync.NewSingleFlightGroup[io.Reader]()
 
 	v, err, shared := g.Do("test", func() (io.Reader, error) {
