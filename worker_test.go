@@ -407,15 +407,3 @@ func TestWorkerScheduleTimeoutBudgetExpiresAfterScheduling(t *testing.T) {
 		require.ErrorIs(t, <-causeCh, sync.ErrTimeout)
 	})
 }
-
-func BenchmarkWorker(b *testing.B) {
-	worker := sync.NewWorker(16)
-	for b.Loop() {
-		_ = worker.Schedule(b.Context(), time.Second, sync.Hook{
-			OnRun: func(context.Context) error {
-				return nil
-			},
-		})
-	}
-	worker.Wait()
-}
