@@ -61,6 +61,7 @@ jobs:
       - run: make sec
       - run: make specs
       - run: make benchmarks
+      - run: make fuzzes
       - save_cache:
           name: save go build cache
           key: go-sync-go-build-cache-{{ checksum "go.sum" }}-{{ checksum "~/.go-version" }}-{{ checksum ".source-key" }}

@@ -6,8 +6,8 @@ include bin/build/make/git.mak
 benchmarks:
 	@$(MAKE) benchtime=$(or $(benchtime),100x) benchmark
 
-# Run bounded fuzz smoke tests. Set fuzztime=<duration> to override the default 1s per target.
-fuzz-smoke: map-fuzz value-fuzz pool-fuzz group-fuzz worker-fuzz
+# Run bounded fuzz tests. Set fuzztime=<duration> to override the default 1s per target.
+fuzzes: map-fuzz value-fuzz pool-fuzz group-fuzz worker-fuzz
 
 map-fuzz:
 	@$(MAKE) package=. name=FuzzMapStringIntOperations fuzztime=$(or $(fuzztime),1s) fuzz
