@@ -52,15 +52,3 @@ func TestBufferPoolCopyDoesNotAliasBuffer(t *testing.T) {
 
 	require.Equal(t, "hello", string(copy), "Copy should not alias buffer storage")
 }
-
-func BenchmarkBufferPool(b *testing.B) {
-	bs := make([]byte, 1024)
-	pool := sync.NewBufferPool()
-
-	for b.Loop() {
-		buffer := pool.Get()
-		buffer.Write(bs)
-		_ = pool.Copy(buffer)
-		pool.Put(buffer)
-	}
-}
