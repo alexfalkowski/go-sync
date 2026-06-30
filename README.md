@@ -35,6 +35,26 @@ make dep
 
 Then run the narrow target you need, such as `make specs`.
 
+### Benchmarks
+
+```bash
+make benchmarks
+make benchtime=1s benchmarks
+make benchmark
+```
+
+### Fuzz smoke tests
+
+```bash
+make fuzz-smoke
+make map-fuzz
+make value-fuzz
+make pool-fuzz
+make group-fuzz
+make worker-fuzz
+make package=. name=FuzzMapStringIntOperations fuzztime=10s fuzz
+```
+
 ## 🧭 Package layout
 
 The public API is intentionally small:
