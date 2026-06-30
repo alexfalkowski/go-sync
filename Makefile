@@ -1,3 +1,5 @@
+fuzztime ?= 1000x
+
 include bin/build/make/help.mak
 include bin/build/make/go.mak
 include bin/build/make/git.mak
@@ -6,21 +8,21 @@ include bin/build/make/git.mak
 benchmarks:
 	@$(MAKE) benchtime=$(or $(benchtime),100x) benchmark
 
-# Run bounded fuzz tests. Set fuzztime=<duration-or-count> to override the default 1000x per target.
+# Run bounded fuzz tests. Set fuzztime=<duration-or-count> to override the default.
 fuzzes: map-fuzz value-fuzz pool-fuzz group-fuzz worker-fuzz
 
 map-fuzz:
-	@$(MAKE) package=. name=FuzzMapStringIntOperations fuzztime=$(or $(fuzztime),1000x) fuzz
-	@$(MAKE) package=. name=FuzzMapNilInterfaceRoundTrip fuzztime=$(or $(fuzztime),1000x) fuzz
+	@$(MAKE) package=. name=FuzzMapStringIntOperations fuzz
+	@$(MAKE) package=. name=FuzzMapNilInterfaceRoundTrip fuzz
 
 value-fuzz:
-	@$(MAKE) package=. name=FuzzValueIntOperations fuzztime=$(or $(fuzztime),1000x) fuzz
+	@$(MAKE) package=. name=FuzzValueIntOperations fuzz
 
 pool-fuzz:
-	@$(MAKE) package=. name=FuzzBufferPoolCopyAndReset fuzztime=$(or $(fuzztime),1000x) fuzz
+	@$(MAKE) package=. name=FuzzBufferPoolCopyAndReset fuzz
 
 group-fuzz:
-	@$(MAKE) package=. name=FuzzErrorsGroupJoinOrder fuzztime=$(or $(fuzztime),1000x) fuzz
+	@$(MAKE) package=. name=FuzzErrorsGroupJoinOrder fuzz
 
 worker-fuzz:
-	@$(MAKE) package=. name=FuzzWorkerTryScheduleCapacity fuzztime=$(or $(fuzztime),1000x) fuzz
+	@$(MAKE) package=. name=FuzzWorkerTryScheduleCapacity fuzz
