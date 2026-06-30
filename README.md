@@ -52,7 +52,7 @@ make value-fuzz
 make pool-fuzz
 make group-fuzz
 make worker-fuzz
-make package=. name=FuzzMapStringIntOperations fuzztime=10s fuzz
+make package=. name=FuzzMapStringIntOperations fuzztime=1000x fuzz
 ```
 
 ## 🧭 Package layout
