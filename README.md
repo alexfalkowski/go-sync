@@ -43,10 +43,10 @@ make benchtime=1s benchmarks
 make benchmark
 ```
 
-### Fuzz smoke tests
+### Fuzzes
 
 ```bash
-make fuzz-smoke
+make fuzzes
 make map-fuzz
 make value-fuzz
 make pool-fuzz
