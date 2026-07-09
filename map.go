@@ -2,6 +2,13 @@ package sync
 
 import "sync"
 
+// AnyMap is an alias for [sync.Map].
+//
+// It is provided for convenience so users of this package can refer to the
+// non-generic map without importing `sync` directly. For a typed map keyed by K
+// with values of type V, use [Map].
+type AnyMap = sync.Map
+
 // NewMap returns a pointer to a [Map] ready for use.
 //
 // The zero value of Map is also ready for use; NewMap is purely optional.

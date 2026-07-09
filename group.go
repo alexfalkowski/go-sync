@@ -94,6 +94,14 @@ func (g *ErrorsGroup) add(index int, err error) {
 	g.errors[index] = err
 }
 
+// AnySingleFlightGroup is an alias for [singleflight.Group].
+//
+// It is provided for convenience so users of this package can refer to the
+// non-generic singleflight group without importing
+// `golang.org/x/sync/singleflight` directly. For a type-safe group that returns
+// values of type T, use [SingleFlightGroup].
+type AnySingleFlightGroup = singleflight.Group
+
 // NewSingleFlightGroup creates a pointer to a new [SingleFlightGroup] instance.
 //
 // A SingleFlightGroup is a generic wrapper around [singleflight.Group] that
@@ -134,6 +142,15 @@ func NewSingleFlightGroup[T any]() *SingleFlightGroup[T] {
 type SingleFlightGroup[T any] struct {
 	group singleflight.Group
 }
+
+// AnySingleFlightResult is an alias for [singleflight.Result].
+//
+// It is provided for convenience so users of this package can refer to the
+// non-generic singleflight result (as returned by [AnySingleFlightGroup.DoChan])
+// without importing `golang.org/x/sync/singleflight` directly. Its value field
+// is `Val any`; for a type-safe result with a `Value T` field, use
+// [SingleFlightResult].
+type AnySingleFlightResult = singleflight.Result
 
 // SingleFlightResult holds the result returned by [SingleFlightGroup.DoChan].
 //

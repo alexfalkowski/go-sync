@@ -28,6 +28,11 @@
 // ErrorGroup is an alias for errgroup.Group. ErrorsGroup runs functions
 // concurrently and returns all non-nil errors joined with errors.Join.
 //
+// AnyPool, AnyMap, AnyValue, AnySingleFlightGroup, and AnySingleFlightResult are
+// aliases for the non-generic sync.Pool, sync.Map, atomic.Value,
+// singleflight.Group, and singleflight.Result; use Pool[T], Map[K,V], Value[T],
+// SingleFlightGroup[T], and SingleFlightResult[T] for the typed wrappers.
+//
 // # Hooks
 //
 // Many APIs accept a Hook. Hook.OnRun is the operation to execute and is required.
