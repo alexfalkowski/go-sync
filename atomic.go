@@ -44,6 +44,13 @@ type Bool = atomic.Bool
 // atomic pointer without importing sync/atomic directly.
 type Pointer[T any] = atomic.Pointer[T]
 
+// AnyValue is an alias for [atomic.Value].
+//
+// It is provided for convenience so users of this package can refer to the
+// non-generic atomic value without importing `sync/atomic` directly. For a
+// typed value holding T, use [Value].
+type AnyValue = atomic.Value
+
 // NewValue returns a pointer to a new [Value] wrapper.
 //
 // The returned pointer is ready for use.

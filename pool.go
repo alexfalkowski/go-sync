@@ -2,6 +2,14 @@ package sync
 
 import "sync"
 
+// AnyPool is an alias for [sync.Pool].
+//
+// It is provided for convenience so users of this package can refer to the
+// standard, non-generic pool without importing `sync` directly. For a typed
+// pool that stores and returns *T without caller-side type assertions, use
+// [Pool].
+type AnyPool = sync.Pool
+
 // NewPool returns a pointer to an initialized [Pool] for values of type T.
 //
 // The returned pool creates new values on demand by allocating `new(T)` when empty.

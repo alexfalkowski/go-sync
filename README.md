@@ -62,8 +62,8 @@ The public API is intentionally small:
 - Aliases: `Once`, `Mutex`, `RWMutex`, `WaitGroup`, `Int32`, `Int64`, `Uint32`, `Uint64`, `Uintptr`, `Bool`, `Pointer[T]`
 - Hooks and timeout helpers: `Hook`, `Handler`, `ErrorHandler`, `ErrNoOnRunProvided`, `ErrTimeout`, `Wait`, `Timeout`, `IsTimeoutError`
 - Worker: `ErrWorkerFull`, `NewWorker`, `Worker.Schedule`, `Worker.TrySchedule`, `Worker.Wait`
-- Groups: `ErrorGroup`, `ErrorsGroup`, `NewSingleFlightGroup`, `SingleFlightGroup`, `SingleFlightResult`
-- Pools and wrappers: `NewPool`, `Pool[T]`, `NewBufferPool`, `BufferPool`, `NewValue`, `Value[T]`, `NewMap`, `Map[K, V]`
+- Groups: `ErrorGroup`, `ErrorsGroup`, `NewSingleFlightGroup`, `SingleFlightGroup`, `AnySingleFlightGroup`, `SingleFlightResult`, `AnySingleFlightResult`
+- Pools and wrappers: `AnyPool`, `NewPool`, `Pool[T]`, `NewBufferPool`, `BufferPool`, `NewValue`, `Value[T]`, `AnyValue`, `NewMap`, `Map[K, V]`, `AnyMap`
 
 Most wrappers preserve the semantics of the standard library type they wrap while making those semantics easier to use from generic code.
 
@@ -74,6 +74,9 @@ The package re-exports a few commonly used concurrency primitives and helper typ
 - `Once`, `Mutex`, `RWMutex`, and `WaitGroup` alias their counterparts in `sync`.
 - `Int32`, `Int64`, `Uint32`, `Uint64`, `Uintptr`, `Bool`, and `Pointer[T]` alias typed atomics from `sync/atomic`.
 - `ErrorGroup` aliases `errgroup.Group`.
+- `AnyPool` aliases the non-generic `sync.Pool`; use `Pool[T]` for a typed pool.
+- `AnyMap` and `AnyValue` alias the non-generic `sync.Map` and `atomic.Value`; use `Map[K, V]` and `Value[T]` for typed wrappers.
+- `AnySingleFlightGroup` and `AnySingleFlightResult` alias `singleflight.Group` and `singleflight.Result`; use `SingleFlightGroup[T]` and `SingleFlightResult[T]` for typed variants.
 
 These are type aliases rather than wrappers, so their behavior is exactly the same as the underlying type.
 
