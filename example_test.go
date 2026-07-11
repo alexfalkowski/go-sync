@@ -46,6 +46,16 @@ func ExampleTimeout() {
 	// Output: true
 }
 
+func ExampleAsync() {
+	future := sync.Async(context.Background(), func(context.Context) (int, error) {
+		return 42, nil
+	})
+
+	value, err := future.Await(context.Background())
+	fmt.Println(value, err == nil)
+	// Output: 42 true
+}
+
 func ExampleWorker() {
 	worker := sync.NewWorker(2)
 	var count sync.Int32
