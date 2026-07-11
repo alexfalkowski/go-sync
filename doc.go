@@ -10,6 +10,7 @@
 //   - Hook-based helpers for running an operation with centralized error handling.
 //   - Wait and Timeout helpers for coordinating an operation with a timeout.
 //   - Worker: a bounded scheduler for running operations concurrently.
+//   - Future: typed asynchronous operations with context-aware waiting.
 //   - Group helpers built on errgroup, errors.Join, and singleflight.
 //   - Typed wrappers around sync.Pool, sync.Map, and sync/atomic.Value.
 //   - BufferPool: a convenience pool for bytes.Buffer.
@@ -85,6 +86,24 @@
 //
 // The zero value of Worker is not ready for use; construct one with NewWorker.
 // A Worker must not be copied after first use; pass and store *Worker values.
+//
+// # Future
+//
+// Async starts a typed operation in a new goroutine and returns a Future for its
+// result. Future caches the operation's value and error, so Await can be called
+// repeatedly by one or more callers after completion.
+//
+// The context passed to Async is the operation's work context. Async invokes
+// the operation even when that context is already done; the operation is
+// responsible for observing cancellation. The context passed to Future.Await
+// controls only how long that caller waits; cancellation of the await context
+// does not cancel the operation. A later Await can still retrieve the eventual
+// result. When await cancellation is selected, Await checks completion once
+// more, so a result published by that check wins; otherwise it returns the
+// await context's cause.
+//
+// Future does not recover panics from the operation. The operation callback must
+// not panic.
 //
 // # Groups
 //

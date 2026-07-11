@@ -62,6 +62,7 @@ The public API is intentionally small:
 - Aliases: `Once`, `Mutex`, `RWMutex`, `WaitGroup`, `Int32`, `Int64`, `Uint32`, `Uint64`, `Uintptr`, `Bool`, `Pointer[T]`
 - Hooks and timeout helpers: `Hook`, `Handler`, `ErrorHandler`, `ErrNoOnRunProvided`, `ErrTimeout`, `Wait`, `Timeout`, `IsTimeoutError`
 - Worker: `ErrWorkerFull`, `NewWorker`, `Worker.Schedule`, `Worker.TrySchedule`, `Worker.Wait`
+- Future: `Async`, `Future[T]`, `Future.Await`
 - Groups: `ErrorGroup`, `ErrorsGroup`, `NewSingleFlightGroup`, `SingleFlightGroup`, `AnySingleFlightGroup`, `SingleFlightResult`, `AnySingleFlightResult`
 - Pools and wrappers: `AnyPool`, `NewPool`, `Pool[T]`, `NewBufferPool`, `BufferPool`, `NewValue`, `Value[T]`, `AnyValue`, `NewMap`, `Map[K, V]`, `AnyMap`
 
@@ -247,6 +248,44 @@ func main() {
             log.Printf("schedule failed: %v", err)
         }
     }
+}
+```
+
+## ⏳ Future
+
+`Async` starts a typed operation immediately and returns a `Future[T]` for its
+eventual result.
+
+- `Async` runs the operation in a new goroutine.
+- The work context passed to `Async` controls the operation.
+- `Async` invokes the operation even when its work context is already canceled;
+  the operation is responsible for observing `ctx.Done()`.
+- `Future.Await` controls only how long the caller waits; canceling its context
+  does not cancel the operation.
+- The value and error are cached, so `Await` can be called repeatedly by one or
+  more callers after completion.
+- If await cancellation is selected, `Await` checks completion once more; a
+  result published by that check wins, otherwise the await context's cause is
+  returned.
+- Operations must not panic; `Future` does not recover panics.
+
+```go
+package main
+
+import (
+    "context"
+    "fmt"
+
+    "github.com/alexfalkowski/go-sync"
+)
+
+func main() {
+    future := sync.Async(context.Background(), func(context.Context) (int, error) {
+        return 42, nil
+    })
+
+    value, err := future.Await(context.Background())
+    fmt.Println(value, err == nil)
 }
 ```
 
