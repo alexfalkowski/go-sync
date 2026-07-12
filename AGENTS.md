@@ -1,6 +1,6 @@
 # AGENTS.md
 
-This repo is `github.com/alexfalkowski/go-sync`, a small Go library whose package name is `sync`. It provides focused concurrency helpers: hook-based wait/timeout helpers, bounded worker scheduling, errgroup/singleflight helpers, typed pool/map/atomic wrappers, and convenience aliases for sync and atomic primitives.
+This repo is `github.com/alexfalkowski/go-sync`, a small Go library whose package name is `sync`. It provides focused concurrency helpers: hook-based wait/timeout helpers, bounded worker scheduling, typed async result handles (Future), errgroup/singleflight helpers, typed pool/map/atomic wrappers, and convenience aliases for sync and atomic primitives.
 
 ## Shared guidance
 
@@ -22,6 +22,7 @@ All library code is in the repo root as package `sync`.
 
 - `doc.go` has the package overview and exported API semantics.
 - `sync.go`, `worker.go`, and `group.go` contain the hook, timeout, worker, errgroup, and singleflight helpers.
+- `future.go` contains the `Future` and `Async` typed asynchronous result helpers.
 - `pool.go`, `bytes.go`, `atomic.go`, and `map.go` contain typed wrappers and aliases.
 - Tests are black-box tests in package `sync_test`.
 - `test/reports/` is for generated reports and artifacts.
@@ -59,6 +60,7 @@ Use the narrowest relevant target for local validation:
 - `Wait` is best-effort: timeout or context cancellation returns `nil` and does not stop `OnRun`.
 - `Timeout` uses a derived context and returns `context.Cause` on timeout/cancellation.
 - `Worker.Schedule` returns only scheduling errors; handler errors are routed through `OnError`.
+- `Future` (from `Async`) caches its result; the `Await` context only bounds the caller's wait and does not cancel the operation.
 - Alias types (`Once`, `Mutex`, `RWMutex`, `WaitGroup`, `ErrorGroup`, atomics, `Pointer[T]`) must remain true aliases.
 - Generic wrappers (`SingleFlightGroup[T]`, `Map[K,V]`, `Pool[T]`, `Value[T]`) use type assertions; avoid changing stored types or nil-interface semantics casually.
 - `BufferPool` intentionally leaves oversized buffer capacity policy to callers; do not treat re-pooling reset buffers without a package-owned capacity limit as a reliability gap.

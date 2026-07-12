@@ -56,6 +56,29 @@ func ExampleAsync() {
 	// Output: 42 true
 }
 
+func ExampleFuture_Await() {
+	release := make(chan struct{})
+	future := sync.Async(context.Background(), func(context.Context) (int, error) {
+		<-release
+		return 42, nil
+	})
+
+	// Awaiting with an already-canceled context returns the cause without
+	// canceling the still-running operation.
+	canceled, cancel := context.WithCancel(context.Background())
+	cancel()
+	_, err := future.Await(canceled)
+	fmt.Println(errors.Is(err, context.Canceled))
+
+	// After the operation finishes, a later Await retrieves the cached result.
+	close(release)
+	value, err := future.Await(context.Background())
+	fmt.Println(value, err == nil)
+	// Output:
+	// true
+	// 42 true
+}
+
 func ExampleWorker() {
 	worker := sync.NewWorker(2)
 	var count sync.Int32
