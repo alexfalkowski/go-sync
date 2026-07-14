@@ -42,5 +42,7 @@ func BenchmarkWorker(b *testing.B) {
 			require.NoError(b, err)
 		}
 	}
-	worker.Wait()
+	if err := worker.Wait(b.Context()); err != nil {
+		require.NoError(b, err)
+	}
 }

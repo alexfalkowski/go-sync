@@ -238,7 +238,7 @@ func FuzzWorkerTryScheduleCapacity(f *testing.F) {
 		}
 
 		close(release)
-		worker.Wait()
+		require.NoError(t, worker.Wait(t.Context()))
 		require.NoError(t, schedulingErr)
 		require.EqualValues(t, scheduled, executed.Load(), "executed handlers should match successful schedules")
 	})

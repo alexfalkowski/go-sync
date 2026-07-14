@@ -96,7 +96,10 @@ func ExampleWorker() {
 		}
 	}
 
-	worker.Wait()
+	if err := worker.Wait(context.Background()); err != nil {
+		fmt.Println(err)
+		return
+	}
 	fmt.Println(count.Load())
 	// Output: 3
 }
@@ -116,7 +119,10 @@ func ExampleWorker_TrySchedule() {
 		return
 	}
 
-	worker.Wait()
+	if err := worker.Wait(context.Background()); err != nil {
+		fmt.Println(err)
+		return
+	}
 	fmt.Println(count.Load())
 	// Output: 1
 }
