@@ -111,6 +111,8 @@
 // Wait returns all non-nil errors joined with errors.Join in the order the
 // functions were passed to Go. ErrorsGroup retains recorded errors for its
 // lifetime, so use a fresh ErrorsGroup for each independent batch of work.
+// SetLimit(n) optionally bounds how many functions run concurrently; a
+// negative n, and the zero value, mean unbounded.
 // Start the first function before calling Wait for an empty group, and wait for
 // a batch to finish before starting the next independent batch.
 // Do not copy an ErrorsGroup after first use.

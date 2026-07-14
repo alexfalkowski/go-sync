@@ -323,6 +323,9 @@ Use `ErrorsGroup` when callers need every error rather than only the first one:
 for each independent batch of work.
 Functions passed to `ErrorsGroup.Go` must not panic; panics are not joined into
 the error returned by `Wait`.
+Call `SetLimit(n)` to bound how many functions run concurrently; a negative `n`,
+and the zero value, mean unbounded. `SetLimit` must not be called while any
+function started by `Go` is still running.
 Start the first function before calling `Wait` for an empty group, and wait for
 a batch to finish before starting the next independent batch.
 Do not copy an `ErrorsGroup` after first use.
