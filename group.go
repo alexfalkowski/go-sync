@@ -32,6 +32,10 @@ type ErrorGroup = errgroup.Group
 // ErrorsGroup retains recorded errors for its lifetime. Use a fresh ErrorsGroup
 // for each independent batch of work.
 //
+// By default, ErrorsGroup places no limit on the number of concurrently
+// running functions started by [ErrorsGroup.Go]. Call [ErrorsGroup.SetLimit]
+// to cap concurrency.
+//
 // Functions passed to [ErrorsGroup.Go] must not panic; panics are not recovered
 // or joined into the error returned by [ErrorsGroup.Wait].
 //
@@ -39,9 +43,28 @@ type ErrorGroup = errgroup.Group
 //
 // An ErrorsGroup must not be copied after first use.
 type ErrorsGroup struct {
+	sem    chan struct{}
 	errors []error
 	wait   sync.WaitGroup
 	mutex  sync.Mutex
+}
+
+// SetLimit limits the number of concurrently running functions started by
+// [ErrorsGroup.Go] to at most n. A negative n means unbounded, which is also
+// the default for a zero-value ErrorsGroup. A limit of zero prevents any
+// subsequent call to Go from starting its function, matching
+// [errgroup.Group.SetLimit].
+//
+// Mirroring [errgroup.Group.SetLimit], SetLimit must not be called while any
+// function started by Go is still running; a limit set before Go is first
+// called applies to every subsequent call to Go.
+func (g *ErrorsGroup) SetLimit(n int) {
+	if n < 0 {
+		g.sem = nil
+		return
+	}
+
+	g.sem = make(chan struct{}, n)
 }
 
 // Go calls the given function in a new goroutine.
@@ -50,17 +73,32 @@ type ErrorsGroup struct {
 // have returned. Non-nil errors are joined in the order the functions were
 // passed to Go, not the order they complete.
 //
+// If a limit is set via [ErrorsGroup.SetLimit], Go blocks until a concurrency
+// slot is available before starting the function.
+//
 // Go inherits [sync.WaitGroup.Go] sequencing constraints: start the first
 // function before calling Wait for an empty group, and wait for a batch to finish
 // before starting the next independent batch.
 func (g *ErrorsGroup) Go(f func() error) {
 	index := g.index()
 
+	if g.sem != nil {
+		g.sem <- struct{}{}
+	}
+
 	g.wait.Go(func() {
+		defer g.release()
+
 		if err := f(); err != nil {
 			g.add(index, err)
 		}
 	})
+}
+
+func (g *ErrorsGroup) release() {
+	if g.sem != nil {
+		<-g.sem
+	}
 }
 
 // Wait blocks until all functions started by [ErrorsGroup.Go] have returned,

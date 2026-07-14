@@ -45,6 +45,89 @@ func TestErrorsGroupWaitJoinsErrorsInGoCallOrder(t *testing.T) {
 	require.EqualError(t, err, "first\nsecond")
 }
 
+func TestErrorsGroupSetLimitBoundsConcurrency(t *testing.T) {
+	synctest.Test(t, func(t *testing.T) {
+		var g sync.ErrorsGroup
+		g.SetLimit(2)
+
+		var current, max sync.Int32
+		release := make(chan struct{})
+		done := make(chan struct{})
+		errs := []error{nil, errors.New("first"), nil, errors.New("second"), nil}
+
+		go func() {
+			defer close(done)
+
+			for _, err := range errs {
+				g.Go(func() error {
+					n := current.Add(1)
+					defer current.Add(-1)
+
+					for {
+						m := max.Load()
+						if n <= m || max.CompareAndSwap(m, n) {
+							break
+						}
+					}
+
+					<-release
+					return err
+				})
+			}
+		}()
+
+		synctest.Wait()
+		require.LessOrEqual(t, max.Load(), int32(2), "SetLimit(2) should cap concurrent Go functions at 2")
+
+		close(release)
+		<-done
+
+		err := g.Wait()
+		require.ErrorContains(t, err, "first")
+		require.ErrorContains(t, err, "second")
+	})
+}
+
+func TestErrorsGroupSetLimitNegativeIsUnbounded(t *testing.T) {
+	synctest.Test(t, func(t *testing.T) {
+		var g sync.ErrorsGroup
+		g.SetLimit(2)
+		g.SetLimit(-1)
+
+		var current, max sync.Int32
+		release := make(chan struct{})
+		done := make(chan struct{})
+
+		go func() {
+			defer close(done)
+
+			for range 5 {
+				g.Go(func() error {
+					n := current.Add(1)
+					defer current.Add(-1)
+
+					for {
+						m := max.Load()
+						if n <= m || max.CompareAndSwap(m, n) {
+							break
+						}
+					}
+
+					<-release
+					return nil
+				})
+			}
+		}()
+
+		synctest.Wait()
+		require.Equal(t, int32(5), max.Load(), "a negative SetLimit should restore unbounded concurrency")
+
+		close(release)
+		<-done
+		require.NoError(t, g.Wait())
+	})
+}
+
 func TestSingleFlightGroup(t *testing.T) {
 	t.Parallel()
 

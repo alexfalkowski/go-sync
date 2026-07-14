@@ -145,6 +145,21 @@ func ExampleErrorsGroup() {
 	// Output: true true
 }
 
+func ExampleErrorsGroup_SetLimit() {
+	var g sync.ErrorsGroup
+	g.SetLimit(1)
+
+	first := errors.New("first")
+	second := errors.New("second")
+
+	g.Go(func() error { return first })
+	g.Go(func() error { return second })
+
+	err := g.Wait()
+	fmt.Println(errors.Is(err, first), errors.Is(err, second))
+	// Output: true true
+}
+
 func ExampleSingleFlightGroup() {
 	var g sync.SingleFlightGroup[int]
 
