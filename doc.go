@@ -82,7 +82,8 @@
 // if capacity is available immediately and returns ErrWorkerFull otherwise.
 // Errors returned by OnRun are routed to hook.OnError (if set) and are not
 // returned by either scheduling method. Use Worker.Wait to wait for all
-// scheduled handlers to finish.
+// scheduled handlers to finish, or return early with the provided context's
+// cancellation cause if the handlers have not finished first.
 //
 // The zero value of Worker is not ready for use; construct one with NewWorker.
 // A Worker must not be copied after first use; pass and store *Worker values.

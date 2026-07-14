@@ -162,12 +162,38 @@ func (w *Worker) TrySchedule(ctx context.Context, hook Hook) error {
 	}
 }
 
-// Wait blocks until all handlers that have been successfully scheduled have completed.
+// Wait waits for all handlers that have been successfully scheduled to
+// complete, or for ctx to be done first.
 //
-// It does not cancel running handlers. Cancellation is controlled by the contexts
-// provided to [Worker.Schedule] or [Worker.TrySchedule] and observed by the handlers themselves.
-// Wait can be called multiple times; each call waits for the currently scheduled
-// work to finish.
-func (w *Worker) Wait() {
-	w.wg.Wait()
+// Wait returns nil once every scheduled handler has finished, or
+// [context.Cause](ctx) if ctx is done first. Completion is observed by a
+// goroutine started for this call rather than a persistent signal, so this
+// is a best-effort race: it narrows, but does not eliminate, the window
+// where an already-done ctx wins over handlers that finished shortly before
+// Wait was called. Wait never cancels a running handler; cancellation is
+// controlled by the contexts provided to [Worker.Schedule] or
+// [Worker.TrySchedule] and observed by the handlers themselves. A handler
+// that ignores its context can keep running after Wait returns; the internal
+// goroutine started by Wait also lives until that handler finishes, matching
+// the lifetime of the already-outstanding work. Wait can be called multiple
+// times; each call waits for the currently scheduled work to finish.
+func (w *Worker) Wait(ctx context.Context) error {
+	done := make(chan struct{})
+
+	go func() {
+		w.wg.Wait()
+		close(done)
+	}()
+
+	select {
+	case <-done:
+		return nil
+	case <-ctx.Done():
+		select {
+		case <-done:
+			return nil
+		default:
+			return context.Cause(ctx)
+		}
+	}
 }

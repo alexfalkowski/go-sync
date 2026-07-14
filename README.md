@@ -208,7 +208,7 @@ func main() {
 - `Schedule` reports the derived context cause or `ErrNoOnRunProvided`; `TrySchedule` reports the input context cause, `ErrWorkerFull`, or `ErrNoOnRunProvided`.
 - If `timeout <= 0`, `Schedule` returns `sync.ErrTimeout` immediately and does not invoke `OnRun`.
 - Once a handler has been scheduled, scheduling returns `nil` even if that handler later observes `ctx.Done()`.
-- `Wait` blocks until all successfully scheduled handlers complete.
+- `Wait(ctx)` waits for all successfully scheduled handlers to complete, returning `nil`, or returns `context.Cause(ctx)` if `ctx` is done first; it does not cancel running handlers.
 - If the input context is already canceled, `Schedule` and `TrySchedule` return the input context's cause immediately and do not schedule `OnRun`.
 
 > [!NOTE]
@@ -230,7 +230,11 @@ import (
 
 func main() {
     worker := sync.NewWorker(4)
-    defer worker.Wait()
+    defer func() {
+        if err := worker.Wait(context.Background()); err != nil {
+            log.Printf("wait failed: %v", err)
+        }
+    }()
 
     for i := 0; i < 3; i++ {
         job := i

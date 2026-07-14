@@ -28,7 +28,7 @@ func TestWorkerSchedule(t *testing.T) {
 	probe.RequireLimitReached(t)
 	probe.ReleaseAll()
 	probe.RequireScheduled(t)
-	worker.Wait()
+	require.NoError(t, worker.Wait(t.Context()))
 	probe.RequireNeverExceeded(t)
 }
 
@@ -50,7 +50,7 @@ func TestWorkerTrySchedule(t *testing.T) {
 	})
 	require.NoError(t, err)
 
-	worker.Wait()
+	require.NoError(t, worker.Wait(t.Context()))
 	require.True(t, called.Load())
 }
 
@@ -81,7 +81,7 @@ func TestWorkerTryScheduleFullDoesNotRun(t *testing.T) {
 	require.False(t, called.Load(), "TrySchedule should not run hook when worker has no free slot")
 
 	close(release)
-	worker.Wait()
+	require.NoError(t, worker.Wait(t.Context()))
 }
 
 func TestWorkerTryScheduleZeroCapacityDoesNotRun(t *testing.T) {
@@ -98,7 +98,7 @@ func TestWorkerTryScheduleZeroCapacityDoesNotRun(t *testing.T) {
 	})
 
 	require.ErrorIs(t, err, sync.ErrWorkerFull)
-	worker.Wait()
+	require.NoError(t, worker.Wait(t.Context()))
 	require.False(t, called.Load(), "zero-capacity worker should not run hook")
 }
 
@@ -120,7 +120,7 @@ func TestWorkerTryScheduleError(t *testing.T) {
 	})
 	require.NoError(t, err)
 
-	worker.Wait()
+	require.NoError(t, worker.Wait(t.Context()))
 	require.ErrorIs(t, <-handled, runErr)
 }
 
@@ -142,7 +142,7 @@ func TestWorkerTryScheduleContextAlreadyCanceledDoesNotRun(t *testing.T) {
 	})
 
 	require.ErrorIs(t, err, expected)
-	worker.Wait()
+	require.NoError(t, worker.Wait(t.Context()))
 	require.False(t, called.Load(), "TrySchedule should not run hook when context is already canceled")
 }
 
@@ -172,7 +172,7 @@ func TestWorkerScheduleTimeout(t *testing.T) {
 		require.True(t, sync.IsTimeoutError(err), "scheduling timeout should be classified as timeout")
 
 		close(release)
-		worker.Wait()
+		require.NoError(t, worker.Wait(t.Context()))
 	})
 }
 
@@ -191,7 +191,7 @@ func TestWorkerScheduleNonPositiveTimeoutDoesNotRun(t *testing.T) {
 
 	require.ErrorIs(t, err, sync.ErrTimeout)
 	require.True(t, sync.IsTimeoutError(err), "non-positive schedule timeout should be classified as timeout")
-	worker.Wait()
+	require.NoError(t, worker.Wait(t.Context()))
 	require.False(t, called.Load(), "non-positive schedule timeout should not run hook")
 }
 
@@ -209,7 +209,7 @@ func TestWorkerScheduleZeroCapacityTimeoutDoesNotRun(t *testing.T) {
 
 		require.ErrorIs(t, err, sync.ErrTimeout)
 		require.True(t, sync.IsTimeoutError(err), "zero-capacity schedule timeout should be classified as timeout")
-		worker.Wait()
+		require.NoError(t, worker.Wait(t.Context()))
 		require.False(t, called.Load(), "zero-capacity worker should not run hook before timeout")
 	})
 }
@@ -231,7 +231,7 @@ func TestWorkerScheduleError(t *testing.T) {
 	})
 	require.NoError(t, err)
 
-	worker.Wait()
+	require.NoError(t, worker.Wait(t.Context()))
 	require.ErrorIs(t, <-handled, context.Canceled)
 }
 
@@ -251,7 +251,7 @@ func TestWorkerScheduleCallsOnError(t *testing.T) {
 	})
 	require.NoError(t, err)
 
-	worker.Wait()
+	require.NoError(t, worker.Wait(t.Context()))
 	require.ErrorIs(t, <-handled, runErr)
 }
 
@@ -270,7 +270,7 @@ func TestWorkerScheduleNotCanceledImmediately(t *testing.T) {
 	require.NoError(t, err)
 
 	close(release)
-	worker.Wait()
+	require.NoError(t, worker.Wait(t.Context()))
 	require.NoError(t, <-errCh)
 }
 
@@ -291,7 +291,7 @@ func TestWorkerScheduleContextAlreadyCanceledDoesNotRun(t *testing.T) {
 	})
 
 	require.ErrorIs(t, err, context.Canceled)
-	worker.Wait()
+	require.NoError(t, worker.Wait(t.Context()))
 	require.False(t, called.Load(), "Schedule should not run hook when context is already canceled")
 }
 
@@ -313,7 +313,7 @@ func TestWorkerScheduleReturnsContextCause(t *testing.T) {
 	})
 
 	require.ErrorIs(t, err, expected)
-	worker.Wait()
+	require.NoError(t, worker.Wait(t.Context()))
 	require.False(t, called.Load(), "Schedule should not run hook when parent context has a cause")
 }
 
@@ -353,7 +353,7 @@ func TestWorkerScheduleReturnsParentCauseWhenContextCanceledWhileQueued(t *testi
 		require.False(t, called.Load(), "queued Schedule should not run hook after parent cancellation")
 
 		close(release)
-		worker.Wait()
+		require.NoError(t, worker.Wait(t.Context()))
 	})
 }
 
@@ -383,7 +383,7 @@ func TestWorkerScheduleTimeoutIncludesQueueWait(t *testing.T) {
 		})
 		require.NoError(t, err)
 
-		worker.Wait()
+		require.NoError(t, worker.Wait(t.Context()))
 		require.ErrorIs(t, <-causeCh, sync.ErrTimeout)
 		require.Equal(t, 250*time.Millisecond, time.Since(begin), "timeout budget should include queue wait")
 	})
@@ -403,7 +403,77 @@ func TestWorkerScheduleTimeoutBudgetExpiresAfterScheduling(t *testing.T) {
 		})
 		require.NoError(t, err)
 
-		worker.Wait()
+		require.NoError(t, worker.Wait(t.Context()))
 		require.ErrorIs(t, <-causeCh, sync.ErrTimeout)
 	})
+}
+
+func TestWorkerWaitReturnsNilWhenHandlersFinish(t *testing.T) {
+	synctest.Test(t, func(t *testing.T) {
+		worker := sync.NewWorker(1)
+		release := make(chan struct{})
+
+		err := worker.Schedule(t.Context(), time.Second, sync.Hook{
+			OnRun: func(context.Context) error {
+				<-release
+				return nil
+			},
+		})
+		require.NoError(t, err)
+
+		errCh := make(chan error, 1)
+		go func() {
+			errCh <- worker.Wait(t.Context())
+		}()
+		synctest.Wait()
+
+		close(release)
+		require.NoError(t, <-errCh)
+	})
+}
+
+func TestWorkerWaitReturnsCauseAtDeadline(t *testing.T) {
+	synctest.Test(t, func(t *testing.T) {
+		worker := sync.NewWorker(1)
+		release := make(chan struct{})
+
+		err := worker.Schedule(t.Context(), time.Second, sync.Hook{
+			OnRun: func(context.Context) error {
+				<-release
+				return nil
+			},
+		})
+		require.NoError(t, err)
+
+		ctx, cancel := context.WithTimeoutCause(t.Context(), 10*time.Millisecond, sync.ErrTimeout)
+		defer cancel()
+
+		err = worker.Wait(ctx)
+
+		require.ErrorIs(t, err, sync.ErrTimeout)
+
+		close(release)
+		require.NoError(t, worker.Wait(t.Context()))
+	})
+}
+
+func TestWorkerWaitCanReturnCauseEvenWhenAlreadyDone(t *testing.T) {
+	t.Parallel()
+
+	worker := sync.NewWorker(1)
+
+	err := worker.Schedule(t.Context(), time.Second, sync.Hook{
+		OnRun: func(context.Context) error { return nil },
+	})
+	require.NoError(t, err)
+	require.NoError(t, worker.Wait(t.Context()))
+
+	ctx, cancel := context.WithCancel(t.Context())
+	cancel()
+
+	err = worker.Wait(ctx)
+
+	require.ErrorIs(t, err, context.Canceled,
+		"Wait's tie-break is best-effort: an already-done ctx can still win "+
+			"over handlers that finished before Wait was called")
 }
