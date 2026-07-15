@@ -84,7 +84,7 @@ func ExampleWorker() {
 	var count sync.Int32
 
 	for range 3 {
-		err := worker.Schedule(context.Background(), time.Second, sync.Hook{
+		err := worker.Schedule(context.Background(), sync.Hook{
 			OnRun: func(context.Context) error {
 				count.Add(1)
 				return nil
@@ -164,6 +164,25 @@ func ExampleErrorsGroup_SetLimit() {
 	err := g.Wait()
 	fmt.Println(errors.Is(err, first), errors.Is(err, second))
 	// Output: true true
+}
+
+func ExampleErrorsGroup_TryGo() {
+	var g sync.ErrorsGroup
+	g.SetLimit(1)
+
+	release := make(chan struct{})
+	started := g.TryGo(func() error {
+		<-release
+		return nil
+	})
+
+	rejected := g.TryGo(func() error { return nil })
+
+	close(release)
+	_ = g.Wait()
+
+	fmt.Println(started, rejected)
+	// Output: true false
 }
 
 func ExampleSingleFlightGroup() {

@@ -201,12 +201,11 @@ func main() {
 - Zero value is not ready; use `NewWorker(count)`.
 - `NewWorker(count)` returns a ready-to-use pointer to a worker with at most `count` in-flight handlers.
 - Do not copy a `Worker` after first use; pass and store `*Worker` values.
-- `Schedule` blocks until a slot is acquired or timeout/cancel happens.
+- `Schedule` is context-only: it blocks until a slot is acquired or `ctx` is done, and does not derive or bound any deadline itself.
 - `TrySchedule` attempts to acquire a slot immediately and returns `sync.ErrWorkerFull` if capacity is unavailable.
-- The `timeout` budget starts when `Schedule` is called, so queue wait time and handler run time share the same deadline.
+- The context passed to `Schedule` is also the context passed to `OnRun`; to bound only the wait for a slot, pass a ctx with a deadline to `Schedule`. To give the handler its own run budget starting when it actually begins, wrap `ctx` with `context.WithTimeout` (or similar) inside `OnRun`.
 - `Schedule` and `TrySchedule` return only scheduling errors.
-- `Schedule` reports the derived context cause or `ErrNoOnRunProvided`; `TrySchedule` reports the input context cause, `ErrWorkerFull`, or `ErrNoOnRunProvided`.
-- If `timeout <= 0`, `Schedule` returns `sync.ErrTimeout` immediately and does not invoke `OnRun`.
+- `Schedule` reports `context.Cause(ctx)` or `ErrNoOnRunProvided`; `TrySchedule` reports the input context cause, `ErrWorkerFull`, or `ErrNoOnRunProvided`.
 - Once a handler has been scheduled, scheduling returns `nil` even if that handler later observes `ctx.Done()`.
 - `Wait(ctx)` waits for all successfully scheduled handlers to complete, returning `nil`, or returns `context.Cause(ctx)` if `ctx` is done first; it does not cancel running handlers.
 - If the input context is already canceled, `Schedule` and `TrySchedule` return the input context's cause immediately and do not schedule `OnRun`.
@@ -214,7 +213,7 @@ func main() {
 > [!NOTE]
 > Worker scheduling methods report scheduling errors only. Handler errors are routed through `Hook.OnError` and are not returned by `Schedule` or `TrySchedule`.
 
-If `count == 0`, `Schedule` always blocks until timeout/cancel and `TrySchedule` returns `sync.ErrWorkerFull` immediately.
+If `count == 0`, `Schedule` always blocks until `ctx` is done and `TrySchedule` returns `sync.ErrWorkerFull` immediately.
 
 ```go
 package main
@@ -223,7 +222,6 @@ import (
     "context"
     "fmt"
     "log"
-    "time"
 
     "github.com/alexfalkowski/go-sync"
 )
@@ -238,7 +236,7 @@ func main() {
 
     for i := 0; i < 3; i++ {
         job := i
-        err := worker.Schedule(context.Background(), time.Second, sync.Hook{
+        err := worker.Schedule(context.Background(), sync.Hook{
             OnRun: func(context.Context) error {
                 fmt.Println("job", job)
                 return nil
@@ -330,6 +328,9 @@ the error returned by `Wait`.
 Call `SetLimit(n)` to bound how many functions run concurrently; a negative `n`,
 and the zero value, mean unbounded. `SetLimit` must not be called while any
 function started by `Go` is still running.
+Use `TryGo` for non-blocking, best-effort submission: it starts a function only
+if a concurrency slot is currently free, returning `false` without starting it
+otherwise, while still joining every error into a later `Wait`.
 Start the first function before calling `Wait` for an empty group, and wait for
 a batch to finish before starting the next independent batch.
 Do not copy an `ErrorsGroup` after first use.

@@ -3,7 +3,6 @@ package sync_test
 import (
 	"context"
 	"testing"
-	"time"
 
 	"github.com/alexfalkowski/go-sync"
 	"github.com/stretchr/testify/require"
@@ -34,7 +33,7 @@ func BenchmarkWorker(b *testing.B) {
 
 	worker := sync.NewWorker(16)
 	for b.Loop() {
-		if err := worker.Schedule(b.Context(), time.Second, sync.Hook{
+		if err := worker.Schedule(b.Context(), sync.Hook{
 			OnRun: func(context.Context) error {
 				return nil
 			},

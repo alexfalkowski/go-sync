@@ -128,6 +128,43 @@ func TestErrorsGroupSetLimitNegativeIsUnbounded(t *testing.T) {
 	})
 }
 
+func TestErrorsGroupTryGoRejectsWhenFullThenAcceptsAfterDraining(t *testing.T) {
+	synctest.Test(t, func(t *testing.T) {
+		var g sync.ErrorsGroup
+		g.SetLimit(1)
+
+		firstErr := errors.New("first")
+		secondErr := errors.New("second")
+		release := make(chan struct{})
+
+		require.True(t, g.TryGo(func() error {
+			<-release
+			return firstErr
+		}), "TryGo should start when a slot is free")
+
+		rejected := g.TryGo(func() error { return errors.New("unreachable") })
+		require.False(t, rejected, "TryGo should reject when the group is full")
+
+		close(release)
+		synctest.Wait()
+
+		accepted := g.TryGo(func() error { return secondErr })
+		require.True(t, accepted, "TryGo should accept once the running function releases its slot")
+
+		err := g.Wait()
+		require.ErrorIs(t, err, firstErr)
+		require.ErrorIs(t, err, secondErr)
+	})
+}
+
+func TestErrorsGroupTryGoUnboundedAlwaysStarts(t *testing.T) {
+	var g sync.ErrorsGroup
+
+	require.True(t, g.TryGo(func() error { return nil }))
+	require.True(t, g.TryGo(func() error { return nil }))
+	require.NoError(t, g.Wait())
+}
+
 func TestSingleFlightGroup(t *testing.T) {
 	t.Parallel()
 
