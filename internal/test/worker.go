@@ -3,7 +3,6 @@ package test
 import (
 	"context"
 	"testing"
-	"time"
 
 	"github.com/alexfalkowski/go-sync"
 	"github.com/stretchr/testify/require"
@@ -36,7 +35,7 @@ type WorkerScheduleProbe struct {
 // Schedule starts one scheduling attempt against worker.
 func (p *WorkerScheduleProbe) Schedule(ctx context.Context, worker *sync.Worker) {
 	go func() {
-		p.errs <- worker.Schedule(ctx, time.Second, sync.Hook{
+		p.errs <- worker.Schedule(ctx, sync.Hook{
 			OnRun: p.run,
 		})
 	}()

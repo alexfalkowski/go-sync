@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"sync"
-	"time"
 )
 
 // ErrWorkerFull is returned by [Worker.TrySchedule] when no concurrency slot is available immediately.
@@ -44,33 +43,30 @@ type Worker struct {
 //
 // Schedule blocks until one of the following occurs:
 //
-//  1. A concurrency slot is acquired before the deadline: Schedule starts OnRun in a goroutine and returns nil.
-//  2. The derived timeout context is done first: Schedule returns
-//     [context.Cause] from that derived context.
+//  1. A concurrency slot is acquired: Schedule starts OnRun in a goroutine and returns nil.
+//  2. ctx is done first: Schedule returns [context.Cause](ctx).
 //
-// The context passed to OnRun is a derived context created by
-// [context.WithTimeoutCause] using the provided timeout.
-// The timeout budget starts when Schedule is called, so time spent waiting for a
-// concurrency slot and time spent running OnRun share the same deadline.
-// This context is also passed to hook.OnError (via hook.Error) if OnRun returns a non-nil error.
-// If OnRun ignores that context and continues running after the deadline, the
-// goroutine may outlive the caller of Schedule until the handler eventually returns.
+// The context passed to OnRun is the ctx provided to Schedule. This context is
+// also passed to hook.OnError (via hook.Error) if OnRun returns a non-nil error.
+// Schedule does not derive or bound any deadline itself; to bound the wait for
+// a slot, pass a ctx with a deadline. To give the handler its own run budget
+// starting when it actually begins, wrap ctx with [context.WithTimeout] (or
+// similar) inside OnRun.
 //
 // Error handling semantics:
 //
 //   - If hook.OnRun is nil, Schedule returns [ErrNoOnRunProvided].
-//     This validation happens before context or timeout shortcut checks.
+//     This validation happens before the context shortcut check.
 //   - If the input context is already done on entry, Schedule returns its
 //     cancellation cause without scheduling OnRun.
-//   - If timeout <= 0, Schedule returns [ErrTimeout] without scheduling OnRun.
 //   - Errors returned from OnRun are routed to hook.OnError (if set) and are not returned from Schedule.
-//     Schedule only reports errors related to scheduling (timeout/cancellation before a slot is acquired).
+//     Schedule only reports errors related to scheduling (cancellation before a slot is acquired).
 //   - Once a handler has been scheduled successfully, Schedule returns nil even
-//     if the derived context later expires while the handler is still running.
+//     if ctx later expires while the handler is still running.
 //   - Panics from OnRun or OnError are not recovered; see [Hook].
 //
 // To wait for all scheduled handlers to complete, call [Worker.Wait].
-func (w *Worker) Schedule(ctx context.Context, timeout time.Duration, hook Hook) error {
+func (w *Worker) Schedule(ctx context.Context, hook Hook) error {
 	if hook.OnRun == nil {
 		return ErrNoOnRunProvided
 	}
@@ -78,22 +74,14 @@ func (w *Worker) Schedule(ctx context.Context, timeout time.Duration, hook Hook)
 		return context.Cause(ctx)
 	}
 
-	ctx, cancel := context.WithTimeoutCause(ctx, timeout, ErrTimeout)
-	if ctx.Err() != nil {
-		cancel()
-		return context.Cause(ctx)
-	}
-
 	select {
 	case w.requests <- struct{}{}:
 		if ctx.Err() != nil {
 			<-w.requests
-			cancel()
 			return context.Cause(ctx)
 		}
 
 		w.wg.Go(func() {
-			defer cancel()
 			defer func() {
 				<-w.requests
 			}()
@@ -101,7 +89,6 @@ func (w *Worker) Schedule(ctx context.Context, timeout time.Duration, hook Hook)
 			_ = hook.Error(ctx, hook.OnRun(ctx))
 		})
 	case <-ctx.Done():
-		cancel()
 		return context.Cause(ctx)
 	}
 

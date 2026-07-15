@@ -35,7 +35,7 @@ func TestWorkerSchedule(t *testing.T) {
 func TestNewWorkerDirectCall(t *testing.T) {
 	t.Parallel()
 
-	require.ErrorIs(t, sync.NewWorker(1).Schedule(t.Context(), time.Second, sync.Hook{}), sync.ErrNoOnRunProvided)
+	require.ErrorIs(t, sync.NewWorker(1).Schedule(t.Context(), sync.Hook{}), sync.ErrNoOnRunProvided)
 }
 
 func TestWorkerTrySchedule(t *testing.T) {
@@ -146,13 +146,13 @@ func TestWorkerTryScheduleContextAlreadyCanceledDoesNotRun(t *testing.T) {
 	require.False(t, called.Load(), "TrySchedule should not run hook when context is already canceled")
 }
 
-func TestWorkerScheduleTimeout(t *testing.T) {
+func TestWorkerScheduleBlocksUntilContextDeadline(t *testing.T) {
 	synctest.Test(t, func(t *testing.T) {
 		worker := sync.NewWorker(1)
 		started := make(chan struct{})
 		release := make(chan struct{})
 
-		err := worker.Schedule(t.Context(), time.Second, sync.Hook{
+		err := worker.Schedule(t.Context(), sync.Hook{
 			OnRun: func(context.Context) error {
 				close(started)
 				<-release
@@ -162,45 +162,32 @@ func TestWorkerScheduleTimeout(t *testing.T) {
 		require.NoError(t, err)
 		<-started
 
-		err = worker.Schedule(t.Context(), 10*time.Millisecond, sync.Hook{
+		ctx, cancel := context.WithTimeoutCause(t.Context(), 10*time.Millisecond, sync.ErrTimeout)
+		defer cancel()
+
+		err = worker.Schedule(ctx, sync.Hook{
 			OnRun: func(context.Context) error {
 				return nil
 			},
 		})
 		require.Error(t, err)
 		require.ErrorIs(t, err, sync.ErrTimeout)
-		require.True(t, sync.IsTimeoutError(err), "scheduling timeout should be classified as timeout")
+		require.True(t, sync.IsTimeoutError(err), "scheduling deadline should be classified as timeout")
 
 		close(release)
 		require.NoError(t, worker.Wait(t.Context()))
 	})
 }
 
-func TestWorkerScheduleNonPositiveTimeoutDoesNotRun(t *testing.T) {
-	t.Parallel()
-
-	worker := sync.NewWorker(1)
-	var called sync.Bool
-
-	err := worker.Schedule(t.Context(), 0, sync.Hook{
-		OnRun: func(context.Context) error {
-			called.Store(true)
-			return nil
-		},
-	})
-
-	require.ErrorIs(t, err, sync.ErrTimeout)
-	require.True(t, sync.IsTimeoutError(err), "non-positive schedule timeout should be classified as timeout")
-	require.NoError(t, worker.Wait(t.Context()))
-	require.False(t, called.Load(), "non-positive schedule timeout should not run hook")
-}
-
-func TestWorkerScheduleZeroCapacityTimeoutDoesNotRun(t *testing.T) {
+func TestWorkerScheduleZeroCapacityBlocksUntilContextDeadline(t *testing.T) {
 	synctest.Test(t, func(t *testing.T) {
 		worker := sync.NewWorker(0)
 		var called sync.Bool
 
-		err := worker.Schedule(t.Context(), time.Second, sync.Hook{
+		ctx, cancel := context.WithTimeoutCause(t.Context(), time.Second, sync.ErrTimeout)
+		defer cancel()
+
+		err := worker.Schedule(ctx, sync.Hook{
 			OnRun: func(context.Context) error {
 				called.Store(true)
 				return nil
@@ -208,9 +195,9 @@ func TestWorkerScheduleZeroCapacityTimeoutDoesNotRun(t *testing.T) {
 		})
 
 		require.ErrorIs(t, err, sync.ErrTimeout)
-		require.True(t, sync.IsTimeoutError(err), "zero-capacity schedule timeout should be classified as timeout")
+		require.True(t, sync.IsTimeoutError(err), "zero-capacity schedule deadline should be classified as timeout")
 		require.NoError(t, worker.Wait(t.Context()))
-		require.False(t, called.Load(), "zero-capacity worker should not run hook before timeout")
+		require.False(t, called.Load(), "zero-capacity worker should not run hook before deadline")
 	})
 }
 
@@ -218,9 +205,9 @@ func TestWorkerScheduleError(t *testing.T) {
 	worker := sync.NewWorker(1)
 	handled := make(chan error, 1)
 
-	require.ErrorIs(t, worker.Schedule(t.Context(), time.Second, sync.Hook{}), sync.ErrNoOnRunProvided)
+	require.ErrorIs(t, worker.Schedule(t.Context(), sync.Hook{}), sync.ErrNoOnRunProvided)
 
-	err := worker.Schedule(t.Context(), time.Second, sync.Hook{
+	err := worker.Schedule(t.Context(), sync.Hook{
 		OnRun: func(context.Context) error {
 			return context.Canceled
 		},
@@ -240,7 +227,7 @@ func TestWorkerScheduleCallsOnError(t *testing.T) {
 	runErr := errors.New("run failed")
 	handled := make(chan error, 1)
 
-	err := worker.Schedule(t.Context(), time.Second, sync.Hook{
+	err := worker.Schedule(t.Context(), sync.Hook{
 		OnRun: func(context.Context) error {
 			return runErr
 		},
@@ -260,7 +247,7 @@ func TestWorkerScheduleNotCanceledImmediately(t *testing.T) {
 	errCh := make(chan error, 1)
 	release := make(chan struct{})
 
-	err := worker.Schedule(t.Context(), time.Second, sync.Hook{
+	err := worker.Schedule(t.Context(), sync.Hook{
 		OnRun: func(ctx context.Context) error {
 			<-release
 			errCh <- ctx.Err()
@@ -283,7 +270,7 @@ func TestWorkerScheduleContextAlreadyCanceledDoesNotRun(t *testing.T) {
 	cancel()
 
 	var called sync.Bool
-	err := worker.Schedule(ctx, time.Second, sync.Hook{
+	err := worker.Schedule(ctx, sync.Hook{
 		OnRun: func(context.Context) error {
 			called.Store(true)
 			return nil
@@ -305,7 +292,7 @@ func TestWorkerScheduleReturnsContextCause(t *testing.T) {
 	cancel(expected)
 
 	var called sync.Bool
-	err := worker.Schedule(ctx, time.Second, sync.Hook{
+	err := worker.Schedule(ctx, sync.Hook{
 		OnRun: func(context.Context) error {
 			called.Store(true)
 			return nil
@@ -323,7 +310,7 @@ func TestWorkerScheduleReturnsParentCauseWhenContextCanceledWhileQueued(t *testi
 		started := make(chan struct{})
 		release := make(chan struct{})
 
-		err := worker.Schedule(t.Context(), time.Second, sync.Hook{
+		err := worker.Schedule(t.Context(), sync.Hook{
 			OnRun: func(context.Context) error {
 				close(started)
 				<-release
@@ -339,7 +326,7 @@ func TestWorkerScheduleReturnsParentCauseWhenContextCanceledWhileQueued(t *testi
 		errCh := make(chan error, 1)
 
 		go func() {
-			errCh <- worker.Schedule(ctx, time.Second, sync.Hook{
+			errCh <- worker.Schedule(ctx, sync.Hook{
 				OnRun: func(context.Context) error {
 					called.Store(true)
 					return nil
@@ -357,44 +344,15 @@ func TestWorkerScheduleReturnsParentCauseWhenContextCanceledWhileQueued(t *testi
 	})
 }
 
-func TestWorkerScheduleTimeoutIncludesQueueWait(t *testing.T) {
-	synctest.Test(t, func(t *testing.T) {
-		worker := sync.NewWorker(1)
-		started := make(chan struct{})
-		causeCh := make(chan error, 1)
-
-		err := worker.Schedule(t.Context(), time.Second, sync.Hook{
-			OnRun: func(context.Context) error {
-				close(started)
-				time.Sleep(150 * time.Millisecond)
-				return nil
-			},
-		})
-		require.NoError(t, err)
-		<-started
-
-		begin := time.Now()
-		err = worker.Schedule(t.Context(), 250*time.Millisecond, sync.Hook{
-			OnRun: func(ctx context.Context) error {
-				<-ctx.Done()
-				causeCh <- context.Cause(ctx)
-				return nil
-			},
-		})
-		require.NoError(t, err)
-
-		require.NoError(t, worker.Wait(t.Context()))
-		require.ErrorIs(t, <-causeCh, sync.ErrTimeout)
-		require.Equal(t, 250*time.Millisecond, time.Since(begin), "timeout budget should include queue wait")
-	})
-}
-
-func TestWorkerScheduleTimeoutBudgetExpiresAfterScheduling(t *testing.T) {
+func TestWorkerScheduleContextDeadlineExpiresAfterScheduling(t *testing.T) {
 	synctest.Test(t, func(t *testing.T) {
 		worker := sync.NewWorker(1)
 		causeCh := make(chan error, 1)
 
-		err := worker.Schedule(t.Context(), time.Second, sync.Hook{
+		ctx, cancel := context.WithTimeoutCause(t.Context(), time.Second, sync.ErrTimeout)
+		defer cancel()
+
+		err := worker.Schedule(ctx, sync.Hook{
 			OnRun: func(ctx context.Context) error {
 				<-ctx.Done()
 				causeCh <- context.Cause(ctx)
@@ -413,7 +371,7 @@ func TestWorkerWaitReturnsNilWhenHandlersFinish(t *testing.T) {
 		worker := sync.NewWorker(1)
 		release := make(chan struct{})
 
-		err := worker.Schedule(t.Context(), time.Second, sync.Hook{
+		err := worker.Schedule(t.Context(), sync.Hook{
 			OnRun: func(context.Context) error {
 				<-release
 				return nil
@@ -437,7 +395,7 @@ func TestWorkerWaitReturnsCauseAtDeadline(t *testing.T) {
 		worker := sync.NewWorker(1)
 		release := make(chan struct{})
 
-		err := worker.Schedule(t.Context(), time.Second, sync.Hook{
+		err := worker.Schedule(t.Context(), sync.Hook{
 			OnRun: func(context.Context) error {
 				<-release
 				return nil
@@ -462,7 +420,7 @@ func TestWorkerWaitCanReturnCauseEvenWhenAlreadyDone(t *testing.T) {
 
 	worker := sync.NewWorker(1)
 
-	err := worker.Schedule(t.Context(), time.Second, sync.Hook{
+	err := worker.Schedule(t.Context(), sync.Hook{
 		OnRun: func(context.Context) error { return nil },
 	})
 	require.NoError(t, err)

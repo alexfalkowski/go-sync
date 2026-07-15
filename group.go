@@ -95,6 +95,35 @@ func (g *ErrorsGroup) Go(f func() error) {
 	})
 }
 
+// TryGo calls the given function in a new goroutine only if a concurrency slot
+// is currently free.
+//
+// If a limit is set via [ErrorsGroup.SetLimit] and no slot is free, TryGo
+// returns false without starting f. Otherwise TryGo returns true; f runs like
+// one started by [ErrorsGroup.Go], and its error, if any, is joined into the
+// result of a later [ErrorsGroup.Wait]. When no limit is set, TryGo always
+// starts f, matching [errgroup.Group.TryGo].
+func (g *ErrorsGroup) TryGo(f func() error) bool {
+	if g.sem != nil {
+		select {
+		case g.sem <- struct{}{}:
+		default:
+			return false
+		}
+	}
+
+	index := g.index()
+	g.wait.Go(func() {
+		defer g.release()
+
+		if err := f(); err != nil {
+			g.add(index, err)
+		}
+	})
+
+	return true
+}
+
 func (g *ErrorsGroup) release() {
 	if g.sem != nil {
 		<-g.sem

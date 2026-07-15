@@ -77,13 +77,16 @@
 // # Worker
 //
 // Worker schedules hook.OnRun to run asynchronously while bounding concurrency.
-// Schedule blocks until the handler is scheduled or the provided timeout
-// (via context.WithTimeoutCause) expires. TrySchedule attempts to schedule only
-// if capacity is available immediately and returns ErrWorkerFull otherwise.
-// Errors returned by OnRun are routed to hook.OnError (if set) and are not
-// returned by either scheduling method. Use Worker.Wait to wait for all
-// scheduled handlers to finish, or return early with the provided context's
-// cancellation cause if the handlers have not finished first.
+// Schedule blocks until a slot is acquired or the provided context is done,
+// and is context-only: it does not derive or bound any deadline itself. To
+// bound the wait for a slot, pass a ctx with a deadline; to give the handler
+// its own run budget starting when it actually begins, wrap ctx inside OnRun.
+// TrySchedule attempts to schedule only if capacity is available immediately
+// and returns ErrWorkerFull otherwise. Errors returned by OnRun are routed to
+// hook.OnError (if set) and are not returned by either scheduling method. Use
+// Worker.Wait to wait for all scheduled handlers to finish, or return early
+// with the provided context's cancellation cause if the handlers have not
+// finished first.
 //
 // The zero value of Worker is not ready for use; construct one with NewWorker.
 // A Worker must not be copied after first use; pass and store *Worker values.
@@ -113,7 +116,9 @@
 // functions were passed to Go. ErrorsGroup retains recorded errors for its
 // lifetime, so use a fresh ErrorsGroup for each independent batch of work.
 // SetLimit(n) optionally bounds how many functions run concurrently; a
-// negative n, and the zero value, mean unbounded.
+// negative n, and the zero value, mean unbounded. TryGo starts a function only
+// if a concurrency slot is currently free, returning false without starting it
+// otherwise.
 // Start the first function before calling Wait for an empty group, and wait for
 // a batch to finish before starting the next independent batch.
 // Do not copy an ErrorsGroup after first use.
