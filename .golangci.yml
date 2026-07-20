@@ -9,6 +9,8 @@ linters:
     - funcorder
     - gochecknoglobals
     - gochecknoinits
+    - gomodguard
+    - gomodguard_v2
     - ireturn
     - mnd
     - nlreturn
