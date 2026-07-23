@@ -51,9 +51,9 @@ type ErrorsGroup struct {
 
 // SetLimit limits the number of concurrently running functions started by
 // [ErrorsGroup.Go] to at most n. A negative n means unbounded, which is also
-// the default for a zero-value ErrorsGroup. A limit of zero prevents any
-// subsequent call to Go from starting its function, matching
-// [errgroup.Group.SetLimit].
+// the default for a zero-value ErrorsGroup. A limit of zero means a
+// concurrency slot is never available, so every subsequent call to Go blocks
+// forever, matching [errgroup.Group.SetLimit].
 //
 // Mirroring [errgroup.Group.SetLimit], SetLimit must not be called while any
 // function started by Go is still running; a limit set before Go is first
@@ -190,6 +190,11 @@ func NewSingleFlightGroup[T any]() *SingleFlightGroup[T] {
 // For a given key, the first caller executes the provided function and
 // concurrent callers for the same key wait for that execution to complete and
 // receive the same result.
+//
+// Completed results are not cached: a call for a key with no execution
+// currently in flight always invokes fn again, even immediately after an
+// earlier call for that key completed. [SingleFlightGroup.Forget] only affects
+// a call that is still in flight.
 //
 // The zero value of SingleFlightGroup is ready for use.
 //

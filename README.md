@@ -270,6 +270,7 @@ eventual result.
   result published by that check wins, otherwise the await context's cause is
   returned.
 - Operations must not panic; `Future` does not recover panics.
+- Do not copy a `Future[T]` after first use; pass and store `*Future[T]` values.
 
 ```go
 package main
@@ -325,9 +326,12 @@ Use `ErrorsGroup` when callers need every error rather than only the first one:
 for each independent batch of work.
 Functions passed to `ErrorsGroup.Go` must not panic; panics are not joined into
 the error returned by `Wait`.
-Call `SetLimit(n)` to bound how many functions run concurrently; a negative `n`,
-and the zero value, mean unbounded. `SetLimit` must not be called while any
-function started by `Go` is still running.
+Call `SetLimit(n)` to bound how many functions run concurrently: a negative `n`
+means unbounded, which is also the default for a zero-value `ErrorsGroup`. A
+limit of `0` means every subsequent call to `Go` blocks forever, since a
+concurrency slot is never available.
+`SetLimit` must not be called while any function started by `Go` is still
+running.
 Use `TryGo` for non-blocking, best-effort submission: it starts a function only
 if a concurrency slot is currently free, returning `false` without starting it
 otherwise, while still joining every error into a later `Wait`.
@@ -441,7 +445,9 @@ func main() {
 - Zero value is not ready; use `NewBufferPool()` which returns a ready-to-use pointer.
 - `Get` returns `*bytes.Buffer`.
 - `Get` returns an empty buffer.
-- `Put` resets the buffer (nil-safe no-op).
+- `Put` resets the buffer (nil-safe no-op); reset only truncates length, so an
+  oversized buffer keeps its capacity and may later be returned by `Get`
+  unchanged. Discard unusually large buffers instead of calling `Put`.
 - `Copy` returns a cloned `[]byte` (non-aliasing, nil-safe).
 
 ```go
