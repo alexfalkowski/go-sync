@@ -34,6 +34,11 @@ func (p *BufferPool) Get() *bytes.Buffer {
 
 // Put resets buffer and puts it back into the pool.
 //
+// Reset only truncates buffer's length; it does not shrink capacity. A buffer
+// that grew large before Put is re-pooled at that capacity and may later be
+// returned by Get unchanged. Callers that can produce unusually large buffers
+// should discard them instead of calling Put.
+//
 // If buffer is nil, Put is a no-op.
 func (p *BufferPool) Put(buffer *bytes.Buffer) {
 	if buffer == nil {

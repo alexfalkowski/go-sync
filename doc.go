@@ -109,16 +109,19 @@
 // Future does not recover panics from the operation. The operation callback must
 // not panic.
 //
+// Do not copy a Future after first use; pass and store *Future values.
+//
 // # Groups
 //
 // ErrorsGroup runs functions concurrently and waits for all of them to finish.
 // Wait returns all non-nil errors joined with errors.Join in the order the
 // functions were passed to Go. ErrorsGroup retains recorded errors for its
 // lifetime, so use a fresh ErrorsGroup for each independent batch of work.
-// SetLimit(n) optionally bounds how many functions run concurrently; a
-// negative n, and the zero value, mean unbounded. TryGo starts a function only
-// if a concurrency slot is currently free, returning false without starting it
-// otherwise.
+// SetLimit(n) bounds how many functions run concurrently: a negative n means
+// unbounded, which is also the default for a zero-value ErrorsGroup. A limit
+// of 0 means every subsequent call to Go blocks forever, since a concurrency
+// slot is never available. TryGo starts a function only if a concurrency slot
+// is currently free, returning false without starting it otherwise.
 // Start the first function before calling Wait for an empty group, and wait for
 // a batch to finish before starting the next independent batch.
 // Do not copy an ErrorsGroup after first use.
@@ -126,9 +129,11 @@
 // SingleFlightGroup[T] is a generic wrapper around singleflight.Group. Its zero
 // value is ready for use. Do returns typed values directly, while DoChan returns
 // a channel of typed SingleFlightResult[T] values for select-based workflows.
-// Both methods preserve singleflight's shared-result behavior. When T is an
-// interface type and the function returns a nil interface value, they expose
-// that result as the zero value of T. Do not copy a SingleFlightGroup[T] after
+// Both methods preserve singleflight's shared-result behavior: only an
+// in-flight call is shared, so completed results are not cached and a later
+// call for the same key invokes the function again. When T is an interface
+// type and the function returns a nil interface value, they expose that
+// result as the zero value of T. Do not copy a SingleFlightGroup[T] after
 // first use.
 //
 // # Typed wrappers
@@ -139,7 +144,9 @@
 // allocates new(T) when the pool is empty.
 //
 // BufferPool is a convenience wrapper over Pool[bytes.Buffer]. Unlike Pool[T],
-// its zero value is not ready for use; construct one with NewBufferPool.
+// its zero value is not ready for use; construct one with NewBufferPool. Put
+// resets a buffer's length but not its capacity, so an oversized buffer keeps
+// that capacity in the pool.
 //
 // Value[T] is a typed wrapper around atomic.Value. Its zero value is ready for use.
 // Load and Swap return the zero value of T if no value has been stored yet. When
