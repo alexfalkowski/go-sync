@@ -16,6 +16,9 @@ type Future[T any] struct {
 
 // Async starts fn in a new goroutine and returns a Future for its result.
 //
+// Async does not limit concurrency. To bound concurrency, use [Worker] or
+// configure an [ErrorGroup] or [ErrorsGroup] with SetLimit.
+//
 // ctx is passed to fn and controls the operation. Async invokes fn even if
 // ctx is already done, so fn is responsible for observing cancellation.
 // Async does not cancel the operation when a caller's Await context is done.
