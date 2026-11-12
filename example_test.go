@@ -56,6 +56,15 @@ func ExampleAsync() {
 	// Output: 42 true
 }
 
+func ExampleGo() {
+	task := sync.Go(context.Background(), func(context.Context) error {
+		return nil
+	})
+
+	fmt.Println(task.Await(context.Background()))
+	// Output: <nil>
+}
+
 func ExampleFuture_Await() {
 	release := make(chan struct{})
 	future := sync.Async(context.Background(), func(context.Context) (int, error) {

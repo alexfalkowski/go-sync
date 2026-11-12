@@ -57,3 +57,26 @@ func (f *Future[T]) Await(ctx context.Context) (T, error) {
 		}
 	}
 }
+
+// Go is the error-only form of Async. It starts handler in a new goroutine,
+// including when ctx is already canceled. As with Async, handler must be non-nil
+// and must not panic.
+func Go(ctx context.Context, handler Handler) *Task {
+	return &Task{future: Async(ctx, func(ctx context.Context) (struct{}, error) {
+		return struct{}{}, handler(ctx)
+	})}
+}
+
+// Task is the error-only counterpart of Future. Its result is cached and can
+// be awaited repeatedly or concurrently. Construct tasks with Go; the zero
+// value is not ready for use.
+type Task struct {
+	future *Future[struct{}]
+}
+
+// Await wraps Future.Await for an error-only result. Its context bounds this
+// wait without canceling the task; a later Await can retrieve the cached error.
+func (t *Task) Await(ctx context.Context) error {
+	_, err := t.future.Await(ctx)
+	return err
+}

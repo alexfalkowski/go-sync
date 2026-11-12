@@ -22,7 +22,7 @@ All library code is in the repo root as package `sync`.
 
 - `doc.go` has the package overview and exported API semantics.
 - `sync.go`, `worker.go`, and `group.go` contain the hook, timeout, worker, errgroup, and singleflight helpers.
-- `future.go` contains the `Future` and `Async` typed asynchronous result helpers.
+- `future.go` contains `Future`/`Async` and the error-only `Task`/`Go` helpers.
 - `pool.go`, `bytes.go`, `atomic.go`, and `map.go` contain typed wrappers and aliases.
 - Tests are black-box tests in package `sync_test`.
 - `test/reports/` is for generated reports and artifacts.

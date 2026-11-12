@@ -63,6 +63,7 @@ The public API is intentionally small:
 - Hooks and timeout helpers: `Hook`, `Handler`, `ErrorHandler`, `ErrNoOnRunProvided`, `ErrTimeout`, `Wait`, `Timeout`, `IsTimeoutError`
 - Worker: `ErrWorkerFull`, `NewWorker`, `Worker.Schedule`, `Worker.TrySchedule`, `Worker.Wait`
 - Future: `Async`, `Future[T]`, `Future.Await`
+- Error-only tasks: `Go`, `Task`, `Task.Await`
 - Groups: `ErrorGroup`, `ErrorsGroup`, `NewSingleFlightGroup`, `SingleFlightGroup`, `AnySingleFlightGroup`, `SingleFlightResult`, `AnySingleFlightResult`
 - Pools and wrappers: `AnyPool`, `NewPool`, `Pool[T]`, `NewBufferPool`, `BufferPool`, `NewValue`, `Value[T]`, `AnyValue`, `NewMap`, `Map[K, V]`, `AnyMap`
 
@@ -291,6 +292,17 @@ func main() {
     fmt.Println(value, err == nil)
 }
 ```
+
+For work that returns only an error, use `Go` and `Task.Await`:
+
+```go
+task := sync.Go(ctx, service.Stop)
+err := task.Await(ctx)
+```
+
+`Task` wraps the existing future implementation. Waiting can be canceled without
+canceling the work, and subsequent waits retrieve the cached error. See the
+[executable example](example_test.go) for complete usage.
 
 ## 👥 Group
 
