@@ -109,10 +109,15 @@
 // Future does not recover panics from the operation. The operation callback must
 // not panic.
 //
+// Future.Done returns a completion channel for use in select statements. It
+// closes after the result is stored, and every call returns the same channel.
+// Canceling an Await context does not close Done.
+//
 // Do not copy a Future after first use; pass and store *Future values.
 //
 // Go is the error-only form of Async and returns a Task. Task.Await returns
 // only an error and follows Future.Await's caching and cancellation semantics.
+// Task.Done exposes the same completion signal as Future.Done.
 //
 // # Groups
 //

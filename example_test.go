@@ -88,6 +88,21 @@ func ExampleFuture_Await() {
 	// 42 true
 }
 
+func ExampleTask_Done() {
+	ctx := context.Background()
+	task := sync.Go(ctx, func(context.Context) error {
+		return nil
+	})
+
+	select {
+	case <-task.Done():
+		fmt.Println(task.Await(ctx))
+	case <-ctx.Done():
+		fmt.Println(ctx.Err())
+	}
+	// Output: <nil>
+}
+
 func ExampleWorker() {
 	worker := sync.NewWorker(2)
 	var count sync.Int32

@@ -36,6 +36,13 @@ func Async[T any](ctx context.Context, fn func(context.Context) (T, error)) *Fut
 	return future
 }
 
+// Done returns a channel that closes when the operation finishes and its result
+// is available through Await. Every call returns the same channel. Canceling an
+// Await context does not close the channel.
+func (f *Future[T]) Done() <-chan struct{} {
+	return f.done
+}
+
 // Await waits for the Future to complete or for ctx to be done.
 //
 // When ctx.Done is selected, Await checks completion once more before
@@ -72,6 +79,11 @@ func Go(ctx context.Context, handler Handler) *Task {
 // value is not ready for use.
 type Task struct {
 	future *Future[struct{}]
+}
+
+// Done wraps [Future.Done] for this task.
+func (t *Task) Done() <-chan struct{} {
+	return t.future.Done()
 }
 
 // Await wraps Future.Await for an error-only result. Its context bounds this
