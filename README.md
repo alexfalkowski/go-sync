@@ -62,8 +62,8 @@ The public API is intentionally small:
 - Aliases: `Once`, `Mutex`, `RWMutex`, `WaitGroup`, `Int32`, `Int64`, `Uint32`, `Uint64`, `Uintptr`, `Bool`, `Pointer[T]`
 - Hooks and timeout helpers: `Hook`, `Handler`, `ErrorHandler`, `ErrNoOnRunProvided`, `ErrTimeout`, `Wait`, `Timeout`, `IsTimeoutError`
 - Worker: `ErrWorkerFull`, `NewWorker`, `Worker.Schedule`, `Worker.TrySchedule`, `Worker.Wait`
-- Future: `Async`, `Future[T]`, `Future.Await`
-- Error-only tasks: `Go`, `Task`, `Task.Await`
+- Future: `Async`, `Future[T]`, `Future.Await`, `Future.Done`
+- Error-only tasks: `Go`, `Task`, `Task.Await`, `Task.Done`
 - Groups: `ErrorGroup`, `ErrorsGroup`, `NewSingleFlightGroup`, `SingleFlightGroup`, `AnySingleFlightGroup`, `SingleFlightResult`, `AnySingleFlightResult`
 - Pools and wrappers: `AnyPool`, `NewPool`, `Pool[T]`, `NewBufferPool`, `BufferPool`, `NewValue`, `Value[T]`, `AnyValue`, `NewMap`, `Map[K, V]`, `AnyMap`
 
@@ -301,8 +301,12 @@ err := task.Await(ctx)
 ```
 
 `Task` wraps the existing future implementation. Waiting can be canceled without
-canceling the work, and subsequent waits retrieve the cached error. See the
-[executable example](example_test.go) for complete usage.
+canceling the work, and subsequent waits retrieve the cached error.
+
+Both `Future.Done` and `Task.Done` return a channel that closes when the work
+finishes and its result is available. Use it in a `select` alongside other
+events; canceling an await does not close it. See the
+[executable examples](example_test.go) for complete usage.
 
 ## 👥 Group
 

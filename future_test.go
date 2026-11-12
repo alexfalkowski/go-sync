@@ -42,6 +42,35 @@ func TestAsyncReturnsError(t *testing.T) {
 	})
 }
 
+func TestFutureDoneReportsCompletion(t *testing.T) {
+	synctest.Test(t, func(t *testing.T) {
+		release := make(chan struct{})
+		future := sync.Async(t.Context(), func(context.Context) (int, error) {
+			<-release
+			return 42, nil
+		})
+		done := future.Done()
+		require.Equal(t, done, future.Done(), "Done must return the same completion channel")
+		synctest.Wait()
+
+		select {
+		case <-done:
+			require.Fail(t, "Done closed before the operation finished")
+		default:
+		}
+
+		close(release)
+		<-done
+
+		ctx, cancel := context.WithCancel(t.Context())
+		cancel()
+		value, err := future.Await(ctx)
+
+		require.NoError(t, err)
+		require.Equal(t, 42, value)
+	})
+}
+
 func TestFutureAwaitCanBeRepeated(t *testing.T) {
 	synctest.Test(t, func(t *testing.T) {
 		var calls sync.Int32
@@ -128,6 +157,12 @@ func TestFutureAwaitContextCancellationDoesNotCancelWork(t *testing.T) {
 		require.ErrorIs(t, err, context.Canceled)
 		require.Empty(t, value)
 
+		select {
+		case <-future.Done():
+			require.Fail(t, "canceling Await closed Done while the operation was still running")
+		default:
+		}
+
 		close(release)
 		synctest.Wait()
 		value, err = future.Await(t.Context())
@@ -188,6 +223,33 @@ func TestGoReturnsCachedError(t *testing.T) {
 	})
 }
 
+func TestTaskDoneReportsCompletion(t *testing.T) {
+	synctest.Test(t, func(t *testing.T) {
+		wantErr := errors.New("task failed")
+		release := make(chan struct{})
+		task := sync.Go(t.Context(), func(context.Context) error {
+			<-release
+			return wantErr
+		})
+		done := task.Done()
+		require.Equal(t, done, task.Done(), "Done must return the same completion channel")
+		synctest.Wait()
+
+		select {
+		case <-done:
+			require.Fail(t, "Done closed before the task finished")
+		default:
+		}
+
+		close(release)
+		<-done
+
+		ctx, cancel := context.WithCancel(t.Context())
+		cancel()
+		require.ErrorIs(t, task.Await(ctx), wantErr)
+	})
+}
+
 func TestTaskAwaitCancellationDoesNotCancelWork(t *testing.T) {
 	synctest.Test(t, func(t *testing.T) {
 		wantErr := errors.New("task failed")
@@ -205,6 +267,12 @@ func TestTaskAwaitCancellationDoesNotCancelWork(t *testing.T) {
 		waitErr := errors.New("caller stopped waiting")
 		cancel(waitErr)
 		require.ErrorIs(t, task.Await(waitCtx), waitErr)
+
+		select {
+		case <-task.Done():
+			require.Fail(t, "canceling Await closed Done while the task was still running")
+		default:
+		}
 
 		close(release)
 		synctest.Wait()
