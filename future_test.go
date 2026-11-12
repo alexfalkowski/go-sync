@@ -169,3 +169,61 @@ func TestAsyncInvokesWorkWithAlreadyCanceledContext(t *testing.T) {
 		require.Zero(t, value)
 	})
 }
+
+func TestGoReturnsCachedError(t *testing.T) {
+	synctest.Test(t, func(t *testing.T) {
+		wantErr := errors.New("task failed")
+		var calls sync.Int32
+		task := sync.Go(t.Context(), func(context.Context) error {
+			calls.Add(1)
+			return wantErr
+		})
+		synctest.Wait()
+
+		require.ErrorIs(t, task.Await(t.Context()), wantErr)
+		ctx, cancel := context.WithCancel(t.Context())
+		cancel()
+		require.ErrorIs(t, task.Await(ctx), wantErr)
+		require.EqualValues(t, 1, calls.Load(), "awaiting a task must not repeat its work")
+	})
+}
+
+func TestTaskAwaitCancellationDoesNotCancelWork(t *testing.T) {
+	synctest.Test(t, func(t *testing.T) {
+		wantErr := errors.New("task failed")
+		release := make(chan struct{})
+		task := sync.Go(t.Context(), func(ctx context.Context) error {
+			<-release
+			if err := ctx.Err(); err != nil {
+				return err
+			}
+			return wantErr
+		})
+		synctest.Wait()
+
+		waitCtx, cancel := context.WithCancelCause(t.Context())
+		waitErr := errors.New("caller stopped waiting")
+		cancel(waitErr)
+		require.ErrorIs(t, task.Await(waitCtx), waitErr)
+
+		close(release)
+		synctest.Wait()
+		require.ErrorIs(t, task.Await(t.Context()), wantErr)
+	})
+}
+
+func TestGoInvokesWorkWithAlreadyCanceledContext(t *testing.T) {
+	synctest.Test(t, func(t *testing.T) {
+		ctx, cancel := context.WithCancel(t.Context())
+		cancel()
+		called := false
+		task := sync.Go(ctx, func(ctx context.Context) error {
+			called = true
+			return context.Cause(ctx)
+		})
+		synctest.Wait()
+
+		require.ErrorIs(t, task.Await(t.Context()), context.Canceled)
+		require.True(t, called, "Go must invoke the handler even when its work context is canceled")
+	})
+}

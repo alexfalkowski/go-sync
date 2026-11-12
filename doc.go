@@ -111,6 +111,9 @@
 //
 // Do not copy a Future after first use; pass and store *Future values.
 //
+// Go is the error-only form of Async and returns a Task. Task.Await returns
+// only an error and follows Future.Await's caching and cancellation semantics.
+//
 // # Groups
 //
 // ErrorsGroup runs functions concurrently and waits for all of them to finish.
