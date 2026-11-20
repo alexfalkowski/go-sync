@@ -60,6 +60,7 @@ make package=. name=FuzzMapStringIntOperations fuzztime=1000x fuzz
 The public API is intentionally small:
 
 - Aliases: `Once`, `Mutex`, `RWMutex`, `WaitGroup`, `Int32`, `Int64`, `Uint32`, `Uint64`, `Uintptr`, `Bool`, `Pointer[T]`
+- Weighted semaphore: `NewSemaphore`, `Semaphore`
 - Hooks and timeout helpers: `Hook`, `Handler`, `ErrorHandler`, `ErrNoOnRunProvided`, `ErrTimeout`, `Wait`, `Timeout`, `IsTimeoutError`
 - Worker: `ErrWorkerFull`, `NewWorker`, `Worker.Schedule`, `Worker.TrySchedule`, `Worker.Wait`
 - Future: `Async`, `Future[T]`, `Future.Await`, `Future.Done`
@@ -76,6 +77,7 @@ The package re-exports a few commonly used concurrency primitives and helper typ
 - `Once`, `Mutex`, `RWMutex`, and `WaitGroup` alias their counterparts in `sync`.
 - `Int32`, `Int64`, `Uint32`, `Uint64`, `Uintptr`, `Bool`, and `Pointer[T]` alias typed atomics from `sync/atomic`.
 - `ErrorGroup` aliases `errgroup.Group`.
+- `Semaphore` aliases [`semaphore.Weighted`](https://pkg.go.dev/golang.org/x/sync/semaphore#Weighted); use `NewSemaphore(size)` to initialize its capacity.
 - `AnyPool` aliases the non-generic `sync.Pool`; use `Pool[T]` for a typed pool.
 - `AnyMap` and `AnyValue` alias the non-generic `sync.Map` and `atomic.Value`; use `Map[K, V]` and `Value[T]` for typed wrappers.
 - `AnySingleFlightGroup` and `AnySingleFlightResult` alias `singleflight.Group` and `singleflight.Result`; use `SingleFlightGroup[T]` and `SingleFlightResult[T]` for typed variants.

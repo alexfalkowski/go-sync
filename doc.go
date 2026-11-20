@@ -29,6 +29,9 @@
 // ErrorGroup is an alias for errgroup.Group. ErrorsGroup runs functions
 // concurrently and returns all non-nil errors joined with errors.Join.
 //
+// Semaphore is an alias for golang.org/x/sync/semaphore.Weighted. Use
+// NewSemaphore to initialize its capacity.
+//
 // AnyPool, AnyMap, AnyValue, AnySingleFlightGroup, and AnySingleFlightResult are
 // aliases for the non-generic sync.Pool, sync.Map, atomic.Value,
 // singleflight.Group, and singleflight.Result; use Pool[T], Map[K,V], Value[T],
