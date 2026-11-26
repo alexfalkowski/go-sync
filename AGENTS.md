@@ -6,6 +6,13 @@ This repo is `github.com/alexfalkowski/go-sync`, a small Go library whose packag
 
 Use `bin/AGENTS.md` for shared skills and cross-repository defaults.
 
+## Accepted design
+
+Read the [accepted-design index](docs/agents/accepted-design.md) and the relevant
+area files before proposing a change or recording a finding or audit entry.
+Apply the recorded scope of each decision and add owner-accepted decisions to
+the relevant area file as they are agreed.
+
 ## Setup Notes
 
 - The `bin` git submodule is required. The root `Makefile` only includes `bin/build/make/go.mak` and `bin/build/make/git.mak`, so most `make` targets fail without it.
@@ -56,14 +63,6 @@ Use the narrowest relevant target for local validation:
 - Keep exported behavior stable; this is a small public library.
 - Public APIs should remain documented in GoDoc and, when helpful, in README examples.
 - Keep tests in external package `sync_test` and use `github.com/stretchr/testify/require`.
-- `Hook` error handling is centralized in `(*Hook).Error`.
-- `Wait` is best-effort: timeout or context cancellation returns `nil` and does not stop `OnRun`.
-- `Timeout` uses a derived context and returns `context.Cause` on timeout/cancellation.
-- `Worker.Schedule` returns only scheduling errors; handler errors are routed through `OnError`.
-- `Future` (from `Async`) caches its result; the `Await` context only bounds the caller's wait and does not cancel the operation.
-- Alias types (`Once`, `Mutex`, `RWMutex`, `WaitGroup`, `ErrorGroup`, atomics, `Pointer[T]`) must remain true aliases.
-- Generic wrappers (`SingleFlightGroup[T]`, `Map[K,V]`, `Pool[T]`, `Value[T]`) use type assertions; avoid changing stored types or nil-interface semantics casually.
-- `BufferPool` intentionally leaves oversized buffer capacity policy to callers; do not treat re-pooling reset buffers without a package-owned capacity limit as a reliability gap.
 
 ## Gotchas
 
